@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {
+typedef struct Next {
     char character;
     double probability;
 } Next;
@@ -12,28 +12,31 @@ int ngram = 2;
 
 void writeInFile();
 void createNgramme();
-Next getData();
+void getData();
 
 int main() {
-    createNgramme();
+//    createNgramme();
+    getData();
 
     return 0;
 }
 
-Next getData() {
+void getData() {
     FILE *fptr;
 
 // Open file in read mode
-    fptr = fopen("file.txt", "r");
+    fptr = fopen("../ngramme.csv", "r");
+
+    if (fptr == NULL) printf("File not found");
 
     char myString[100];
     Next data[256];
 
     while(fgets(myString, 100, fptr)) {
-        printf("%s|", myString);
+        printf("%s", myString);
 
         char character = myString[1];
-        double probability = myString[3]; //todo: string to double
+        double probability = 0.56; //todo: string to double
         
         data[myString[0]].character = character;
         data[myString[0]].probability = probability;
@@ -45,7 +48,7 @@ Next getData() {
 // Close the file
     fclose(fptr);
 
-    return data;
+//    return data;
 }
 
 
