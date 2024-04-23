@@ -15,8 +15,8 @@ Next data[256];
 double dataArray[256][256];
 char text[100];
 int textLength = 10;
-double requiredPercentage = 0.0564;
-int textGenMode = 1; //0 = highest prob., 1 = Random value over percentage
+double requiredPercentage = 0.0164;
+int textGenMode = 0; //0 = highest prob. (default), 1 = Random value over percentage
 
 void writeInFile();
 void readFile();
@@ -35,6 +35,11 @@ int main() {
 //    randomNgram();
     readFileRandom();
 
+    // Settings
+    textGenMode = 1;
+    textLength = 99;
+
+    // generate
     generateText();
     printf("%s", text);
 
@@ -184,8 +189,11 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     int randomNum = 257;
     int loopCounter = 0;
     do {
-        srand(time(NULL));
-        randomNum = rand() % 257; //todo: optimieren
+        int seed = clock();
+        srand(seed);
+        randomNum = rand() % counter+1; //todo: optimieren
+        //test
+        printf("%d|", seed);
         if (loopCounter++ > 100) {
             randomNum = 0;
             break;
