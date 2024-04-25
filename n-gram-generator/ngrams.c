@@ -44,7 +44,7 @@ void countProbability(Next letter[]) {
 }
 
 int main() {
-    char str[] = "ababbcbdfgkfg";
+    char str[] = "Hi this a test string";
     Next letter[N] = {0}; // Initialize all occurrences to zero
 
     printf("String: %s\n", str);
@@ -65,3 +65,6 @@ int main() {
     }
     return 0;
 }
+
+
+//next time: read file instead of String
