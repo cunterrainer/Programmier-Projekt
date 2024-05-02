@@ -15,8 +15,8 @@ Next data[256];
 double dataArray[256][256];
 char text[100];
 int textLength = 10;
-double requiredPercentage = 0.0164;
-int textGenMode = 0; //0 = highest prob. (default), 1 = Random value over percentage
+double requiredPercentage = 0.1264;
+int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
 
 void writeInFile();
 void readFile();
@@ -27,6 +27,7 @@ void getFirstLetterByHighestProbability(int letters[2]);
 void getNextLetterByHighestProbability(int letters[2]);
 void generateText();
 void getNextLetterByPercentageProbability(int letters[2]);
+void getFirstLettersByPercentageProbability(int letters[2]);
 
 
 int main() {
@@ -36,7 +37,7 @@ int main() {
     readFileRandom();
 
     // Settings
-    textGenMode = 1;
+    textGenMode = 0;
     textLength = 99;
 
     // generate
@@ -47,7 +48,9 @@ int main() {
 }
 
 /*todo:
- * - für mehr als ein Buchstabe Funktionen anpassen (variabel anpassbar)
+ * - für mehr als ein Buchstabe Funktionen anpassen
+ * - random Funktion verbessern
+ * - ...
  * */
 
 
@@ -77,58 +80,11 @@ void readFileRandom() {
     fclose(fptr);
 }
 
-void readFile() {
-    FILE *file = fopen("../ngrammeRandom.csv", "r");
-    char doubleString[15] = "";
-    char character;
-    int c;
-    int counterData = 0;
-
-    if (file == NULL) printf("File not found"); //could not open file
-
-    bool isProbability = false;
-    bool isCharacter = true;
-    int i = 0;
-
-    while ((c = fgetc(file)) != EOF) {
-
-        if (isProbability) {
-
-            if (c == '\n') {
-                isProbability = false;
-                double probability = 0.0;
-                sscanf(doubleString, "%lf", &probability);
-
-                data[counterData].character = character;
-                data[counterData++].probability = probability;
-            } else {
-                doubleString[i++] = (char) c;
-            }
-
-        }
-
-        if ((char) c == ',') {
-            isProbability = true;
-            isCharacter = false;
-            i = 0;
-        }
-
-        if ((char) c == '\n') {
-            isCharacter = true;
-        }
-
-        if (isCharacter) {
-            character = (char) c;
-        }
-
-    }
-
-    printf("Finished reading");
-}
-
 void generateText() {
     int letters[2];
-    getFirstLetterByHighestProbability(letters);
+
+//    getFirstLetterByHighestProbability(letters);
+    getFirstLettersByPercentageProbability(letters);
 
     text[0] = (char) letters[0];
     text[1] = (char) letters[1];
@@ -145,6 +101,34 @@ void generateText() {
         letters[0] = letters[1];
     }
 
+}
+
+void getFirstLettersByPercentageProbability(int letters[2]) {
+    double probabilities[65000][2] = {0};
+    unsigned int counter = 0;
+    for (int i = 65; i < 122; i++) {
+        for (int j = 65; j < 122; j++) {
+            if (dataArray[i][j] > requiredPercentage) {
+                probabilities[counter][0] = i;
+                probabilities[counter++][1] = j;
+            }
+        }
+    }
+
+    //random Buchstabe aus array zuweisen
+    unsigned int randomNum = 257;
+    int loopCounter = 0;
+    do {
+        srand(time(NULL));
+        randomNum = rand() % counter+1; //todo: optimieren
+        if (loopCounter++ > 100) {
+            randomNum = 0;
+            break;
+        }
+    } while (probabilities[randomNum][0] == 0);
+
+    letters[0] = probabilities[randomNum][0];
+    letters[1] = probabilities[randomNum][1];
 }
 
 void getFirstLetterByHighestProbability(int letters[2]) {
@@ -201,6 +185,56 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     } while (probabilities[randomNum] == 0);
 
     letters[1] = probabilities[randomNum];
+}
+
+//old
+void readFile() {
+    FILE *file = fopen("../ngrammeRandom.csv", "r");
+    char doubleString[15] = "";
+    char character;
+    int c;
+    int counterData = 0;
+
+    if (file == NULL) printf("File not found"); //could not open file
+
+    bool isProbability = false;
+    bool isCharacter = true;
+    int i = 0;
+
+    while ((c = fgetc(file)) != EOF) {
+
+        if (isProbability) {
+
+            if (c == '\n') {
+                isProbability = false;
+                double probability = 0.0;
+                sscanf(doubleString, "%lf", &probability);
+
+                data[counterData].character = character;
+                data[counterData++].probability = probability;
+            } else {
+                doubleString[i++] = (char) c;
+            }
+
+        }
+
+        if ((char) c == ',') {
+            isProbability = true;
+            isCharacter = false;
+            i = 0;
+        }
+
+        if ((char) c == '\n') {
+            isCharacter = true;
+        }
+
+        if (isCharacter) {
+            character = (char) c;
+        }
+
+    }
+
+    printf("Finished reading");
 }
 
 
