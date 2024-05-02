@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include<sys/time.h>
 
 typedef struct Next {
     char character;
@@ -37,7 +38,7 @@ int main() {
     readFileRandom();
 
     // Settings
-    textGenMode = 0;
+    textGenMode = 1;
     textLength = 99;
 
     // generate
@@ -119,7 +120,11 @@ void getFirstLettersByPercentageProbability(int letters[2]) {
     unsigned int randomNum = 257;
     int loopCounter = 0;
     do {
-        srand(time(NULL));
+        struct timeval tv;
+        gettimeofday(&tv,NULL);
+        int seed = tv.tv_usec;
+
+        srand(seed);
         randomNum = rand() % counter+1; //todo: optimieren
         if (loopCounter++ > 100) {
             randomNum = 0;
@@ -173,11 +178,14 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     int randomNum = 257;
     int loopCounter = 0;
     do {
-        int seed = clock();
+        struct timeval tv;
+        gettimeofday(&tv,NULL);
+        int seed = tv.tv_usec;
+
         srand(seed);
-        randomNum = rand() % counter+1; //todo: optimieren
+        randomNum = rand() % counter+1;
         //test
-        printf("%d|", seed);
+//        printf("%d|", seed);
         if (loopCounter++ > 100) {
             randomNum = 0;
             break;
