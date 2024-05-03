@@ -4,6 +4,8 @@
 #include <time.h>
 #include<sys/time.h>
 
+#define TXTLENGTH 100
+
 typedef struct Next {
     char character;
     double probability;
@@ -14,8 +16,8 @@ double ngramArray[128];
 int ngram = 2;
 Next data[256];
 double dataArray[256][256];
-char text[100];
-int textLength = 10;
+char text[TXTLENGTH];
+int textLength = TXTLENGTH;
 double requiredPercentage = 0.1264;
 int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
 
@@ -38,6 +40,7 @@ int main() {
 //    readFile();
 //    randomNgram();
     readFileRandom();
+    initializeRandomNumSeed();
 
     // Settings
     textGenMode = 1;
@@ -186,10 +189,7 @@ void initializeRandomNumSeed() {
 }
 
 unsigned int getRandomNum(int limit) {
-
-    unsigned int randomNum = rand() % limit;//todo: optimieren
-
-    return randomNum;
+    return (unsigned int) rand() % limit;
 }
 
 //old
