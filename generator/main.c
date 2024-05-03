@@ -30,6 +30,7 @@ void generateText();
 void getNextLetterByPercentageProbability(int letters[2]);
 void getFirstLettersByPercentageProbability(int letters[2]);
 unsigned int getRandomNum(int counter);
+void initializeRandomNumSeed();
 
 
 int main() {
@@ -51,7 +52,13 @@ int main() {
 
 /*todo:
  * - für mehr als zwei Buchstaben Funktionen anpassen
- * - random Funktion verbessern
+ * - testen
+ * - buchstaben vorgeben
+ * - zeilenumbrüche
+ * - header datei
+ * - baumstruktur
+ * - Zeilenanfang markieren, z.b. durch festes Zeichen
+ *      - generieren von Sätzen
  * - ...
  * */
 
@@ -170,13 +177,17 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     letters[1] = probabilities[randomNum];
 }
 
-unsigned int getRandomNum(int counter) {
+void initializeRandomNumSeed() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     int seed = tv.tv_usec;
 
     srand(seed);
-    unsigned int randomNum = rand() % counter;//todo: optimieren
+}
+
+unsigned int getRandomNum(int limit) {
+
+    unsigned int randomNum = rand() % limit;//todo: optimieren
 
     return randomNum;
 }
