@@ -29,6 +29,7 @@ void getNextLetterByHighestProbability(int letters[2]);
 void generateText();
 void getNextLetterByPercentageProbability(int letters[2]);
 void getFirstLettersByPercentageProbability(int letters[2]);
+unsigned int getRandomNum(int counter);
 
 
 int main() {
@@ -49,7 +50,7 @@ int main() {
 }
 
 /*todo:
- * - für mehr als ein Buchstabe Funktionen anpassen
+ * - für mehr als zwei Buchstaben Funktionen anpassen
  * - random Funktion verbessern
  * - ...
  * */
@@ -118,19 +119,7 @@ void getFirstLettersByPercentageProbability(int letters[2]) {
 
     //random Buchstabe aus array zuweisen
     unsigned int randomNum = 257;
-    int loopCounter = 0;
-    do {
-        struct timeval tv;
-        gettimeofday(&tv,NULL);
-        int seed = tv.tv_usec;
-
-        srand(seed);
-        randomNum = rand() % counter+1; //todo: optimieren
-        if (loopCounter++ > 100) {
-            randomNum = 0;
-            break;
-        }
-    } while (probabilities[randomNum][0] == 0);
+    randomNum = getRandomNum(counter);
 
     letters[0] = probabilities[randomNum][0];
     letters[1] = probabilities[randomNum][1];
@@ -175,24 +164,21 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     }
 
     //random Buchstabe aus array zuweisen
-    int randomNum = 257;
-    int loopCounter = 0;
-    do {
-        struct timeval tv;
-        gettimeofday(&tv,NULL);
-        int seed = tv.tv_usec;
-
-        srand(seed);
-        randomNum = rand() % counter+1;
-        //test
-//        printf("%d|", seed);
-        if (loopCounter++ > 100) {
-            randomNum = 0;
-            break;
-        }
-    } while (probabilities[randomNum] == 0);
+    unsigned int randomNum = 257;
+    randomNum = getRandomNum(counter);
 
     letters[1] = probabilities[randomNum];
+}
+
+unsigned int getRandomNum(int counter) {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    int seed = tv.tv_usec;
+
+    srand(seed);
+    unsigned int randomNum = rand() % counter;//todo: optimieren
+
+    return randomNum;
 }
 
 //old
