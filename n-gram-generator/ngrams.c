@@ -8,7 +8,7 @@ typedef struct {
     char character;
     int occurrence;
     int following[N]; // array to store the occurrences of characters following this character
-    double probability[N]; // 2D array to store probabilities
+    double probability[N]; //array to store probabilities
 } Next;
 
 // Function to count occurrences of characters and return the occurrence value
@@ -67,4 +67,3 @@ int main() {
 }
 
 
-//next time: read file instead of String
