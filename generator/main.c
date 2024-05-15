@@ -33,6 +33,7 @@ void getNextLetterByPercentageProbability(int letters[2]);
 void getFirstLettersByPercentageProbability(int letters[2]);
 unsigned int getRandomNum(int counter);
 void initializeRandomNumSeed();
+void getFirstLetterByUser(int letters[2]);
 
 
 int main() {
@@ -45,7 +46,7 @@ int main() {
     // Settings
     textGenMode = 1;
     textLength = 99;
-
+    
     // generate
     generateText();
     printf("%s", text);
@@ -55,16 +56,25 @@ int main() {
 
 /*todo:
  * - für mehr als zwei Buchstaben Funktionen anpassen
- * - testen
+ * - testen (done)
  * - buchstaben vorgeben
  * - zeilenumbrüche
  * - header datei
  * - baumstruktur
  * - Zeilenanfang markieren, z.b. durch festes Zeichen
  *      - generieren von Sätzen
+*  - in array pointer speichern
+ *      - array pointer -> pointer -> double wert / Null
  * - ...
  * */
 
+
+void getFirstLetterByUser(int letters[2]){
+    printf("Start Buchstabe eingeben: ");
+    char firstLetter = 'a';
+    scanf("%c",&firstLetter);
+    letters[0] = firstLetter;
+}
 
 void readFileRandom() {
     FILE *fptr;
@@ -96,11 +106,12 @@ void generateText() {
     int letters[2];
 
 //    getFirstLetterByHighestProbability(letters);
-    getFirstLettersByPercentageProbability(letters);
+//    getFirstLettersByPercentageProbability(letters);
+    getFirstLetterByUser(letters);
 
-    text[0] = (char) letters[0];
-    text[1] = (char) letters[1];
-    letters[0] = letters[1];
+    text[0] = (char) letters[0]; //todo: fix with user input
+//    text[1] = (char) letters[1];
+//    letters[0] = letters[1];
 
     for (int i = 2; i < textLength; i++) {
         if (textGenMode == 0) {
