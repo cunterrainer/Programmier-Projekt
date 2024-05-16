@@ -5,20 +5,24 @@
 #define N 256
 
 typedef struct {
-    char pair[3]; //pair of characters plus null terminator?
+    char pair[3]; // Pair of characters plus null terminator
     int occurrence;
 } Next;
 
-//counting occurrences of character pairs and return the occurrence value
+// Counting occurrences of character pairs and returning the occurrence value
 void countOccurence(char str[], Next pairs[]) {
-    for (int i = 0; str[i] != '\0'; i++) {
+    for (int i = 0; str[i] != '\0' && str[i + 1] != '\0'; i++) { // Ensure there is a pair
+        if (str[i]==' '||str[i + 1] == ' ') {
+            continue;
+        } // Skip pairs where the second character is a space
+
         char current_pair[3] = {str[i], str[i + 1], '\0'}; // Create a pair of characters
         
         int found = 0;
         for (int j = 0; j < N; j++) {
             if (strcmp(current_pair, pairs[j].pair) == 0) {
                 pairs[j].occurrence++; // Increment the occurrence of the character pair
-                found = 1;//because for if(!found) this is easier to use
+                found = 1;
                 break;
             }
         }
