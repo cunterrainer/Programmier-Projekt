@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #define N 256
 
 typedef struct {
@@ -47,7 +46,6 @@ void countOccurence(char str[], Next pairs[]) {
         }
     }
 }//broken from here
-
 
 int main() {
     char str[] = "Hi this a test string with strings";
