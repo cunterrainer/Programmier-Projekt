@@ -109,11 +109,11 @@ void generateText() {
 //    getFirstLettersByPercentageProbability(letters);
     getFirstLetterByUser(letters);
 
-    text[0] = (char) letters[0]; //todo: fix with user input
+    text[0] = (char) letters[0];
 //    text[1] = (char) letters[1];
 //    letters[0] = letters[1];
 
-    for (int i = 2; i < textLength; i++) {
+    for (int i = 1; i < textLength; i++) {
         if (textGenMode == 0) {
             getNextLetterByHighestProbability(letters);
         } else if (textGenMode == 1) {
