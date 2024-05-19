@@ -5,14 +5,16 @@
 
 #define N 256
 
+// Trie node structure definition
 typedef struct trienode {
     struct trienode *children[N];
     bool word_end;
     int occurrence;
 } trienode;
 
+// Function to create a new trie node
 trienode *createnode() {
-    trienode *new_letter = malloc(sizeof *new_letter);
+    trienode *new_letter = (trienode*)malloc(sizeof *new_letter);
     for (int i = 0; i < N; i++) {
         new_letter->children[i] = NULL;
     }
@@ -21,6 +23,7 @@ trienode *createnode() {
     return new_letter;
 }
 
+// Function to insert bigrams into the trie
 void insert_bigram(trienode **root, const char *text) {
     if (*root == NULL) {
         *root = createnode();
@@ -32,6 +35,7 @@ void insert_bigram(trienode **root, const char *text) {
             continue; // Skip spaces for bigram creation
         }
 
+        // Casting to avoid negative index
         unsigned char index1 = (unsigned char)text[i];
         unsigned char index2 = (unsigned char)text[i + 1];
 
@@ -48,74 +52,38 @@ void insert_bigram(trienode **root, const char *text) {
     }
 }
 
-void print_bigrams_helper(trienode *root, char *buffer, int depth) {
-    if (root == NULL) {
-        return;
+// Helper function to calculate the total occurrences of bigrams starting with a specific character
+int calculate_total_following(trienode *root, unsigned char index) {
+    if (root == NULL || root->children[index] == NULL) {
+        return 0;
     }
 
-    if (root->word_end) {
-        buffer[depth] = '\0';
-        printf("bigram: %s, occurrence: %d\n", buffer, root->occurrence);
-    }
-
+    int total = 0;
     for (int i = 0; i < N; i++) {
-        if (root->children[i] != NULL) {
-            buffer[depth] = i;
-            print_bigrams_helper(root->children[i], buffer, depth + 1);
+        if (root->children[index]->children[i] != NULL) {
+            total += root->children[index]->children[i]->occurrence;
         }
     }
+    return total;
 }
 
-void print_bigrams(trienode *root) {
-    char buffer[3]; // Buffer to hold bigrams during traversal
-    buffer[2] = '\0'; // Bigrams are always two characters long
-    print_bigrams_helper(root, buffer, 0);
-}
-
-void calculate_total_occurrences(trienode *root, int *total) {
-    if (root == NULL) {
-        return;
-    }
-
+// Function to print the probabilities of each character following another character
+void print_following_probabilities(trienode *root) {
     for (int i = 0; i < N; i++) {
         if (root->children[i] != NULL) {
+            int total_following = calculate_total_following(root, i);
+            if (total_following == 0) {
+                continue;
+            }
+
             for (int j = 0; j < N; j++) {
                 if (root->children[i]->children[j] != NULL) {
-                    *total += root->children[i]->children[j]->occurrence;
-                    calculate_total_occurrences(root->children[i]->children[j], total);
+                    double probability = (double)root->children[i]->children[j]->occurrence / total_following;
+                    printf("Probability of '%c' after '%c' is %.4f\n", j, i, probability);
                 }
             }
         }
     }
-}
-
-void print_bigrams_with_probabilities(trienode *root) {
-    int total_occurrences = 0;
-    calculate_total_occurrences(root, &total_occurrences);
-
-    char buffer[3];
-    buffer[2] = '\0';
-
-    void print_with_probabilities_helper(trienode *node, char *buf, int depth) {
-        if (node == NULL) {
-            return;
-        }
-
-        if (node->word_end) {
-            buf[depth] = '\0';
-            double probability = (double)node->occurrence / total_occurrences;
-            printf("bigram: %s, occurrence: %d, probability: %.4f\n", buf, node->occurrence, probability);
-        }
-
-        for (int i = 0; i < N; i++) {
-            if (node->children[i] != NULL) {
-                buf[depth] = i;
-                print_with_probabilities_helper(node->children[i], buf, depth + 1);
-            }
-        }
-    }
-
-    print_with_probabilities_helper(root, buffer, 0);
 }
 
 int main() {
@@ -124,14 +92,8 @@ int main() {
 
     insert_bigram(&root, str);
 
-    printf("Bigrams and their occurrences:\n");
-    print_bigrams(root);
-
-    printf("\nBigrams with probabilities:\n");
-    print_bigrams_with_probabilities(root);
-
-    // Freeing memory (optional but good practice)
-    // Free function not implemented here for brevity
+    printf("Character following probabilities:\n");
+    print_following_probabilities(root);
 
     return 0;
 }
