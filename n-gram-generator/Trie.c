@@ -5,7 +5,7 @@
 
 #define N 256
 
-// Trie node structure definition
+
 typedef struct trienode {
     struct trienode *children[N];
     bool word_end;
@@ -14,86 +14,116 @@ typedef struct trienode {
 
 // Function to create a new trie node
 trienode *createnode() {
-    trienode *new_letter = (trienode*)malloc(sizeof *new_letter);
+    trienode *new_node = (trienode *)malloc(sizeof(*new_node));
     for (int i = 0; i < N; i++) {
-        new_letter->children[i] = NULL;
+        new_node->children[i] = NULL; // set all to null
     }
-    new_letter->word_end = false;
-    new_letter->occurrence = 0;
-    return new_letter;
+    new_node->word_end = false;
+    new_node->occurrence = 0;
+    return new_node; // it returns the pointer that points to the new node
 }
 
-// Function to insert bigrams into the trie
-void insert_bigram(trienode **root, const char *text) {
+//Function to insert n-grams (2 to 5) into the trie
+void insert_ngram(trienode **root, const char *text, int n) {
     if (*root == NULL) {
         *root = createnode();
     }
 
     int length = strlen(text);
-    for (int i = 0; i < length - 1; i++) {
-        if (text[i] == ' ' || text[i + 1] == ' ') {
-            continue; // Skip spaces for bigram creation
+
+    for (int i = 0; i <= length - n; i++) {
+        bool valid_ngram = true;
+        for (int j = 0; j < n; j++) {
+            if (text[i + j] == ' ') {
+                valid_ngram = false;
+                break; // Skip n-grams containing spaces
+            }
+        }
+        if (!valid_ngram) {
+            continue;
         }
 
-        // Casting to avoid negative index
-        unsigned char index1 = (unsigned char)text[i];
-        unsigned char index2 = (unsigned char)text[i + 1];
-
-        if ((*root)->children[index1] == NULL) {
-            (*root)->children[index1] = createnode();
+        trienode *current = *root;
+        for (int j = 0; j < n; j++) {
+            unsigned char index = (unsigned char)text[i + j];
+            if (current->children[index] == NULL) {
+                current->children[index] = createnode();
+            }
+            current = current->children[index];
         }
 
-        if ((*root)->children[index1]->children[index2] == NULL) {
-            (*root)->children[index1]->children[index2] = createnode();
-        }
-
-        (*root)->children[index1]->children[index2]->occurrence++;
-        (*root)->children[index1]->children[index2]->word_end = true;
+        current->occurrence++;
+        current->word_end = true;
     }
 }
 
-// Helper function to calculate the total occurrences of bigrams starting with a specific character
-int calculate_total_following(trienode *root, unsigned char index) {
-    if (root == NULL || root->children[index] == NULL) {
+//Calculate the total occurrences of n-grams following a specific prefix
+int calculate_total_following(trienode *root, const char *prefix, int prefix_len) {
+    if (root == NULL) {
         return 0;
+    }
+
+    trienode *current = root;
+    for (int i = 0; i < prefix_len; i++) {
+        unsigned char index = (unsigned char)prefix[i];
+        if (current->children[index] == NULL) {
+            return 0;
+        }
+        current = current->children[index];
     }
 
     int total = 0;
     for (int i = 0; i < N; i++) {
-        if (root->children[index]->children[i] != NULL) {
-            total += root->children[index]->children[i]->occurrence;
+        if (current->children[i] != NULL) {
+            total += current->children[i]->occurrence;
         }
     }
     return total;
 }
 
-// Function to print the probabilities of each character following another character
-void print_following_probabilities(trienode *root) {
-    for (int i = 0; i < N; i++) {
-        if (root->children[i] != NULL) {
-            int total_following = calculate_total_following(root, i);
-            if (total_following == 0) {
-                continue;
-            }
+//Print the probabilities of n-grams following a given prefix
+void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_len) {
+    trienode *current = root;
+    for (int i = 0; i < prefix_len; i++) {
+        unsigned char index = (unsigned char)prefix[i];
+        if (current->children[index] == NULL) {
+            return;
+        }
+        current = current->children[index];
+    }
 
-            for (int j = 0; j < N; j++) {
-                if (root->children[i]->children[j] != NULL) {
-                    double probability = (double)root->children[i]->children[j]->occurrence / total_following;
-                    printf("Probability of '%c' after '%c' is %.4f\n", j, i, probability);
-                }
-            }
+    int total_following = calculate_total_following(root, prefix, prefix_len);
+    if (total_following == 0) {
+        return;
+    }
+
+    for (int i = 0; i < N; i++) {
+        if (current->children[i] != NULL) {
+            double probability = (double)current->children[i]->occurrence / total_following;
+            printf("Probability of '%c' after '%s' is %.4f\n", i, prefix, probability);
         }
     }
 }
 
 int main() {
     trienode *root = NULL;
-    char *str = "hi this is a test string";
+    char *str = "hi this is a test for a strong string";
 
-    insert_bigram(&root, str);
+    // Insert n-grams of length 2 to 5
+    for (int n = 2; n <= 5; n++) {
+        insert_ngram(&root, str, n);
+    }
 
-    printf("Character following probabilities:\n");
-    print_following_probabilities(root);
+    // Print probabilities for n-grams of length 2 to 5
+    for (int n = 2; n <= 5; n++) {
+        printf("\nProbabilities for %d-grams:\n", n);
+        for (int i = 0; i < strlen(str) - n + 1; i++) {
+            char prefix[n];
+            strncpy(prefix, str + i, n - 1);
+            prefix[n - 1] = '\0';
+            print_ngram_probabilities(root, prefix, n - 1);
+        }
+    }
 
     return 0;
 }
