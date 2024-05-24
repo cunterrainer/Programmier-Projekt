@@ -20,13 +20,13 @@ trienode *createnode() {
     }
     new_node->word_end = false;
     new_node->occurrence = 0;
-    return new_node; // it returns the pointer that points to the new node
+    return new_node; // newnode is a pointer that pointes to the newly allocated tTrienode 
 }
 
 //Function to insert n-grams (2 to 5) into the trie
-void insert_ngram(trienode **root, const char *text, int n) {
+void insert_ngram(trienode **root, const char *text, int n) {//pointer to a pointer because I want to manipulate the root
     if (*root == NULL) {
-        *root = createnode();
+        *root = createnode();//*root=new-node :means the root noe contains the address of the newnode
     }
 
     int length = strlen(text);
@@ -43,15 +43,15 @@ void insert_ngram(trienode **root, const char *text, int n) {
             continue;
         }
 
-        trienode *current = *root;
+        trienode *current = *root;//current points to the same Trienode that root points to
         for (int j = 0; j < n; j++) {
             unsigned char index = (unsigned char)text[i + j];
             if (current->children[index] == NULL) {
                 current->children[index] = createnode();
             }
-            current = current->children[index];
+            current = current->children[index];//updates the current pointer to point to the childnode of the new character
         }
-
+//incremnt the occurence when the ngram is over
         current->occurrence++;
         current->word_end = true;
     }
@@ -63,7 +63,7 @@ int calculate_total_following(trienode *root, const char *prefix, int prefix_len
         return 0;
     }
 
-    trienode *current = root;
+    trienode *current = root; //current pointer points to the 
     for (int i = 0; i < prefix_len; i++) {
         unsigned char index = (unsigned char)prefix[i];
         if (current->children[index] == NULL) {
@@ -107,7 +107,7 @@ void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_le
 
 int main() {
     trienode *root = NULL;
-    char *str = "hi this is a test for a strong string";
+    char *str = "hi this is a test for a strong string toast toad";
 
     // Insert n-grams of length 2 to 5
     for (int n = 2; n <= 5; n++) {
