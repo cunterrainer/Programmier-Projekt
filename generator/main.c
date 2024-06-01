@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include<sys/time.h>
-
-#define TXTLENGTH 100
+#include "main.h"
 
 typedef struct Next {
     char character;
@@ -20,33 +19,22 @@ char text[TXTLENGTH];
 int textLength = TXTLENGTH;
 double requiredPercentage = 0.1264;
 int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
+double* dataArrayPointer[256];
 
-void writeInFile();
-void readFile();
-void createNgramme();
-void randomNgram();
-void readFileRandom();
-void getFirstLetterByHighestProbability(int letters[2]);
-void getNextLetterByHighestProbability(int letters[2]);
-void generateText();
-void getNextLetterByPercentageProbability(int letters[2]);
-void getFirstLettersByPercentageProbability(int letters[2]);
-unsigned int getRandomNum(int counter);
-void initializeRandomNumSeed();
-void getFirstLetterByUser(int letters[2]);
 
 
 int main() {
 //    createNgramme();
 //    readFile();
 //    randomNgram();
-    readFileRandom();
+//    readFileRandom();
+    readFileNew();
     initializeRandomNumSeed();
 
     // Settings
     textGenMode = 1;
     textLength = 99;
-    
+
     // generate
     generateText();
     printf("%s", text);
@@ -56,17 +44,141 @@ int main() {
 
 /*todo:
  * - für mehr als zwei Buchstaben Funktionen anpassen
- * - testen (done)
- * - buchstaben vorgeben
+ * - buchstaben vorgeben (ein Buchstabe done)
  * - zeilenumbrüche
- * - header datei
  * - baumstruktur
  * - Zeilenanfang markieren, z.b. durch festes Zeichen
  *      - generieren von Sätzen
 *  - in array pointer speichern
  *      - array pointer -> pointer -> double wert / Null
  * - ...
+ *
+ * Done:
+ * - header datei (done)
+ * - testen (done)
+ *
  * */
+
+
+// neues Schema
+//double* arrayPointer1[256];
+//double* arrayPointer2[256];
+//double* arrayPointer3[256];
+//double value;
+//
+//value = 0.0233;
+//arrayPointer2[0] = &value;
+//arrayPointer1[0] = arrayPointer2;
+
+void readFileNew() {
+
+    FILE *fptr;
+    char line[13];
+    char doubleString[8];
+//    double** pArray[256];
+    double** array = (double**)malloc(256 * sizeof(double*));
+    double* pArray2[256];
+    double pArray3[256];
+    int firstLetter = 0;
+    int secondLetter = 0;
+    int oldFirstLetter;
+    int oldSecondLetter;
+    int oldFirstLetterBool;
+    int oldSecondLetterBool;
+
+    // Open a file in writing mode
+    fptr = fopen("../ngrammeRandom.csv", "r");
+
+    while(fgets(line, 100, fptr)) {
+        oldFirstLetter = firstLetter;
+        firstLetter = line[0];
+        oldFirstLetterBool = (oldFirstLetter == firstLetter) ? 1 : 0;
+
+        oldSecondLetter = secondLetter;
+        secondLetter = line[1];
+        oldSecondLetterBool = (oldSecondLetter == secondLetter) ? 1 : 0;
+
+        int thirdLetter = line[2];
+
+        for (int i = 4; i < 12; i++) {
+            doubleString[i-4] = line[i];
+        }
+
+        double probability = 0.0;
+
+        sscanf(doubleString, "%lf", &probability);
+
+//        dataArray[firstLetter][secondLetter] = probability;
+
+
+        if (oldFirstLetterBool == 0) {
+//            double* pArray2[256];
+            array[firstLetter] = (double*)malloc(256 * sizeof(double));
+        }
+
+        if (oldSecondLetterBool == 0) {
+            double pArray3[256];
+            array
+            pArray3[thirdLetter] = probability;
+            array[firstLetter][secondLetter] = pArray3;
+            pArray[firstLetter] = pArray2;
+        }
+
+    }
+
+    // Close the file
+    fclose(fptr);
+
+}
+
+
+int testGemini() {
+    // Define the size of the outer array
+    int outer_size = 256;
+
+    // Allocate memory for the outer array of double pointers
+    double** array = (double**)malloc(outer_size * sizeof(double*));
+
+    // Check if memory allocation was successful
+    if (array == NULL) {
+        printf("Memory allocation failed!\n");
+        return 1;
+    }
+
+    // Define the size of the inner arrays
+    int inner_size = 256;
+
+    // Allocate memory and initialize values for each inner array
+    for (int i = 0; i < outer_size; i++) {
+        array[i] = (double*)malloc(inner_size * sizeof(double));
+        if (array[i] == NULL) {
+            printf("Memory allocation failed for inner array %d!\n", i);
+            // Free previously allocated memory to avoid leaks
+            for (int j = 0; j < i; j++) {
+                free(array[j]);
+            }
+            free(array);
+            return 1;
+        }
+
+        // Initialize values in the inner array for demonstration
+        for (int j = 0; j < inner_size; j++) {
+            array[i][j] = i * inner_size + j;  // Assign a simple value based on index
+        }
+    }
+
+    // Access and print elements using double array pointer notation
+    printf("Value at array[0][1]: %.2f\n", array[0][1]);
+    printf("Value at array[1][2]: %.2f\n", array[1][2]);
+
+    // Free the allocated memory to avoid memory leaks
+    for (int i = 0; i < outer_size; i++) {
+        free(array[i]);
+    }
+    free(array);
+
+    return 0;
+}
 
 
 void getFirstLetterByUser(int letters[2]){
@@ -303,9 +415,11 @@ void randomNgram() {
 
     for (int i = 65; i < 123; i++) {
         for (int j = 65; j < 123; j++) {
-            double randomNum = (double)rand() / (double)RAND_MAX * 60000;
-            double value = randomNum / 100000;
-            fprintf(fptr, "%c%c,%lf \n", i, j, value);
+            for (int k = 65; k < 123; k++) {
+                double randomNum = (double)rand() / (double)RAND_MAX * 60000;
+                double value = randomNum / 100000;
+                fprintf(fptr, "%c%c%c,%lf \n", i, j, k, value);
+            }
         }
     }
 
