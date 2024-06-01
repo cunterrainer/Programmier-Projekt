@@ -16,7 +16,7 @@ void countOccurence(char str[], Next letter[]) {
     for (int i = 0; str[i] != '\0'; i++) {
         char current_char = str[i];
         char following_char = str[i + 1];
-        letter[current_char].character = current_char; // Record the character
+        letter[current_char].character = current_char; // Record the character// uses the ascii code of the character
         letter[current_char].occurrence++; // Increment the occurrence of the current character
 
         if (following_char != '\0') {
