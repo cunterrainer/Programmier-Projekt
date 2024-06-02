@@ -16,6 +16,8 @@ void getFirstLettersByPercentageProbability(int letters[2]);
 unsigned int getRandomNum(int counter);
 void initializeRandomNumSeed();
 void getFirstLetterByUser(int letters[2]);
-void readFileNew();
+//void readFileNew();
+int readFileWithMalloc();
+char* getNextLine(FILE*);
 
 #endif //PROGRAMMIER_PROJEKT_MAIN_H

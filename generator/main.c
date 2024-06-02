@@ -20,6 +20,7 @@ int textLength = TXTLENGTH;
 double requiredPercentage = 0.1264;
 int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
 double* dataArrayPointer[256];
+char line[13];
 
 
 
@@ -28,7 +29,8 @@ int main() {
 //    readFile();
 //    randomNgram();
 //    readFileRandom();
-    readFileNew();
+//    readFileNew();
+    readFileWithMalloc();
     initializeRandomNumSeed();
 
     // Settings
@@ -70,66 +72,66 @@ int main() {
 //arrayPointer2[0] = &value;
 //arrayPointer1[0] = arrayPointer2;
 
-void readFileNew() {
-
-    FILE *fptr;
-    char line[13];
-    char doubleString[8];
-//    double** pArray[256];
-    double** array = (double**)malloc(256 * sizeof(double*));
-    double* pArray2[256];
-    double pArray3[256];
-    int firstLetter = 0;
-    int secondLetter = 0;
-    int oldFirstLetter;
-    int oldSecondLetter;
-    int oldFirstLetterBool;
-    int oldSecondLetterBool;
-
-    // Open a file in writing mode
-    fptr = fopen("../ngrammeRandom.csv", "r");
-
-    while(fgets(line, 100, fptr)) {
-        oldFirstLetter = firstLetter;
-        firstLetter = line[0];
-        oldFirstLetterBool = (oldFirstLetter == firstLetter) ? 1 : 0;
-
-        oldSecondLetter = secondLetter;
-        secondLetter = line[1];
-        oldSecondLetterBool = (oldSecondLetter == secondLetter) ? 1 : 0;
-
-        int thirdLetter = line[2];
-
-        for (int i = 4; i < 12; i++) {
-            doubleString[i-4] = line[i];
-        }
-
-        double probability = 0.0;
-
-        sscanf(doubleString, "%lf", &probability);
-
-//        dataArray[firstLetter][secondLetter] = probability;
-
-
-        if (oldFirstLetterBool == 0) {
-//            double* pArray2[256];
-            array[firstLetter] = (double*)malloc(256 * sizeof(double));
-        }
-
-        if (oldSecondLetterBool == 0) {
-            double pArray3[256];
-            array
-            pArray3[thirdLetter] = probability;
-            array[firstLetter][secondLetter] = pArray3;
-            pArray[firstLetter] = pArray2;
-        }
-
-    }
-
-    // Close the file
-    fclose(fptr);
-
-}
+//void readFileNew() {
+//
+//    FILE *fptr;
+//    char line[13];
+//    char doubleString[8];
+////    double** pArray[256];
+//    double** array = (double**)malloc(256 * sizeof(double*));
+//    double* pArray2[256];
+//    double pArray3[256];
+//    int firstLetter = 0;
+//    int secondLetter = 0;
+//    int oldFirstLetter;
+//    int oldSecondLetter;
+//    int oldFirstLetterBool;
+//    int oldSecondLetterBool;
+//
+//    // Open a file in writing mode
+//    fptr = fopen("../ngrammeRandom.csv", "r");
+//
+//    while(fgets(line, 100, fptr)) {
+//        oldFirstLetter = firstLetter;
+//        firstLetter = line[0];
+//        oldFirstLetterBool = (oldFirstLetter == firstLetter) ? 1 : 0;
+//
+//        oldSecondLetter = secondLetter;
+//        secondLetter = line[1];
+//        oldSecondLetterBool = (oldSecondLetter == secondLetter) ? 1 : 0;
+//
+//        int thirdLetter = line[2];
+//
+//        for (int i = 4; i < 12; i++) {
+//            doubleString[i-4] = line[i];
+//        }
+//
+//        double probability = 0.0;
+//
+//        sscanf(doubleString, "%lf", &probability);
+//
+////        dataArray[firstLetter][secondLetter] = probability;
+//
+//
+//        if (oldFirstLetterBool == 0) {
+////            double* pArray2[256];
+//            array[firstLetter] = (double*)malloc(256 * sizeof(double));
+//        }
+//
+//        if (oldSecondLetterBool == 0) {
+//            double pArray3[256];
+//            array
+//            pArray3[thirdLetter] = probability;
+//            array[firstLetter][secondLetter] = pArray3;
+//            pArray[firstLetter] = pArray2;
+//        }
+//
+//    }
+//
+//    // Close the file
+//    fclose(fptr);
+//
+//}
 
 
 int testGemini() {
@@ -178,6 +180,100 @@ int testGemini() {
     free(array);
 
     return 0;
+}
+
+int readFileWithMalloc() {
+    FILE* fptr;
+    // Open a file in writing mode
+    fptr = fopen("../ngrammeRandom.csv", "r");
+
+    // Define the size of the outer array
+    int outer_size = 256;
+    double*** array = (double***)malloc(outer_size * sizeof(double**));
+
+    int middle_size = 256;
+    int inner_size = 256;
+
+//
+    char* line2 = getNextLine(fptr);
+    int firstLetter = line2[0];
+    int secondLetter = line2[1];
+    int thirdLetter = line2[2];
+
+    char doubleString[8];
+    for (int i = 4; i < 12; i++) {
+        doubleString[i-4] = line[i];
+    }
+
+    double probability = 0.0;
+    sscanf(doubleString, "%lf", &probability);
+//
+    for (int i = 0; i < outer_size; i++) {
+        if (i != firstLetter) continue;
+        array[i] = (double**)malloc(middle_size * sizeof(double*));
+
+        for (int j = 0; j < middle_size; j++) {
+            if (j != secondLetter) continue;
+            array[i][j] = (double*)malloc(inner_size * sizeof(double));
+
+            for (int k = 0; k < inner_size; k++) {
+                if (k != thirdLetter) continue;
+
+                line2 = getNextLine(fptr); //todo: fix
+                firstLetter = line2[0];
+                secondLetter = line2[1];
+                thirdLetter = line2[2];
+
+                for (int m = 4; m < 12; m++) {
+                    doubleString[i-4] = line[m];
+                }
+
+                probability = 0.0;
+                sscanf(doubleString, "%lf", &probability);
+
+                array[i][j][k] = probability;  // Assign a simple value based on index
+            }
+        }
+    }
+
+
+    // Free and print the allocated memory to avoid memory leaks
+    for (int i = 0; i < outer_size; i++) {
+        for (int j = 0; j < middle_size; j++) {
+            for (int k = 0; k < inner_size; k++) {
+                printf("Value at array[%d][%d][%d]: %.2f\n", i, j, k, array[i][j][k]);
+            }
+            free(array[i][j]);
+        }
+        free(array[i]);
+    }
+    free(array);
+
+    // Close the file
+    fclose(fptr);
+
+    return 0;
+}
+
+char* getNextLine(FILE* fptr) {
+
+//    char doubleString[8];
+
+    while(fgets(line, 100, fptr)) {
+
+//        int firstLetter = line[0];
+//        int secondLetter = line[1];
+//        int thirdLetter = line[2];
+//
+//        for (int i = 4; i < 12; i++) {
+//            doubleString[i-4] = line[i];
+//        }
+//
+//        double probability = 0.0;
+//        sscanf(doubleString, "%lf", &probability);
+        return line;
+
+    }
 }
 
 
