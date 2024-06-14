@@ -126,7 +126,7 @@ int readFileWithMalloc() {
 
     int middle_size = 256;
     int inner_size = 256;
-    int trash = 256; // fgets ändert diesen wert auf 10, warum keine Ahnung. Wird er entfernt, wird die Variable darüber auf 10 gesetzt
+    int trash = 256; // fgets ändert diesen wert auf 10, WARUM?!??!?! Wird er entfernt, wird die Variable darüber auf 10 gesetzt
 
     int oldFirstLetter = -1;
     int oldSecondLetter = -1;
