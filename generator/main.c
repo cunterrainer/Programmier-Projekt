@@ -5,11 +5,6 @@
 #include<sys/time.h>
 #include "main.h"
 
-
-
-
-
-
 int main() {
 //    createNgramme();
 //    readFile();
@@ -118,55 +113,6 @@ int main() {
 //
 //}
 
-
-int testGemini() {
-    // Define the size of the outer array
-    int outer_size = 256;
-
-    // Allocate memory for the outer array of double pointers
-    double** array = (double**)malloc(outer_size * sizeof(double*));
-
-    // Check if memory allocation was successful
-    if (array == NULL) {
-        printf("Memory allocation failed!\n");
-        return 1;
-    }
-
-    // Define the size of the inner arrays
-    int inner_size = 256;
-
-    // Allocate memory and initialize values for each inner array
-    for (int i = 0; i < outer_size; i++) {
-        array[i] = (double*)malloc(inner_size * sizeof(double));
-        if (array[i] == NULL) {
-            printf("Memory allocation failed for inner array %d!\n", i);
-            // Free previously allocated memory to avoid leaks
-            for (int j = 0; j < i; j++) {
-                free(array[j]);
-            }
-            free(array);
-            return 1;
-        }
-
-        // Initialize values in the inner array for demonstration
-        for (int j = 0; j < inner_size; j++) {
-            array[i][j] = i * inner_size + j;  // Assign a simple value based on index
-        }
-    }
-
-    // Access and print elements using double array pointer notation
-    printf("Value at array[0][1]: %.2f\n", array[0][1]);
-    printf("Value at array[1][2]: %.2f\n", array[1][2]);
-
-    // Free the allocated memory to avoid memory leaks
-    for (int i = 0; i < outer_size; i++) {
-        free(array[i]);
-    }
-    free(array);
-
-    return 0;
-}
-
 int readFileWithMalloc() {
     FILE* fptr;
     // Open a file in writing mode
@@ -225,12 +171,12 @@ int readFileWithMalloc() {
     // Free and print the allocated memory to avoid memory leaks
     for (int i = 65; i < outer_size; i++) {
         if (array[i] == NULL) {
-            printf("Null");
+            printf("array[%d]: Null \n", i);
             continue;
         }
         for (int j = 65; j < middle_size; j++) {
             if (array[i][j] == NULL) {
-                printf("Null");
+                printf("array[%d][%d]: Null \n", i, j);
                 continue;
             }
             for (int k = 65; k < inner_size; k++) {
