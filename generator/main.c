@@ -43,14 +43,13 @@ int main() {
 }
 
 /*todo:
- * - für mehr als zwei Buchstaben Funktionen anpassen
  * - buchstaben vorgeben (ein Buchstabe done)
- * - zeilenumbrüche
- * - baumstruktur
  * - Zeilenanfang markieren, z.b. durch festes Zeichen
  *      - generieren von Sätzen
+ *      - zeilenumbrüche
 *  - in array pointer speichern
  *      - array pointer -> pointer -> double wert / Null
+ *      - für mehr als zwei Buchstaben Funktionen anpassen
  * - ...
  *
  * Done:
@@ -196,6 +195,10 @@ int readFileWithMalloc() {
     int isFirstSet = -1;
     int isSecondSet = -1;
 
+    int i = 0;
+    int j = 0;
+    int k = 0;
+
     while(fgets(line, 100, fptr)) {
         int firstLetter = line[0];
         int secondLetter = line[1];
@@ -209,26 +212,50 @@ int readFileWithMalloc() {
         double probability = 0.0;
         sscanf(doubleString, "%lf", &probability);
 
-        for (int i = 0; i < outer_size; i++) {
-            if (i != firstLetter) continue;
-            if (isFirstSet != firstLetter) {
+        int isLetterSet = 0;
+
+        while (!isLetterSet) {
+            //1. Schleife
+            if (i != firstLetter) {
+                array[i] = NULL;
+                i++;
+                continue;
+            } else if (isFirstSet != firstLetter) {
                 array[i] = (double**) malloc(middle_size * sizeof(double *));
                 isFirstSet = firstLetter;
             }
 
-            for (int j = 0; j < middle_size; j++) {
-                if (j != secondLetter) continue;
-                if (isSecondSet != secondLetter) {
-                    array[i][j] = (double*) malloc(inner_size * sizeof(double));
-                    isSecondSet = secondLetter;
+            //2. Schleife
+            if (j != secondLetter) {
+                array[i][j] = NULL;
+                j++;
+                if (j > 255) {
+                    j = 0;
+                    isLetterSet = 1;
                 }
+                continue;
+            } else if (isSecondSet != secondLetter) {
+                array[i][j] = (double*) malloc(inner_size * sizeof(double));
+                isSecondSet = secondLetter;
+            }
 
-                for (int k = 0; k < inner_size; k++) {
-                    if (k != thirdLetter) continue;
+            //3. Schleife
+            if (k == thirdLetter) {
+                array[i][j][k] = probability; // Assign a simple value based on index
+                isLetterSet = 1;
+            }
+            if (k < 255) {
+                k++;
+            } else {
+                k = 0;
+                isLetterSet = 1;
+            }
 
-                    array[i][j][k] = probability;  // Assign a simple value based on index
-                    break;
-                }
+            if (i < firstLetter) i++;
+            if (j < secondLetter) j++;
+            if (j > 255) {
+                j = 0;
+                isLetterSet = 1;
             }
         }
 
@@ -237,15 +264,15 @@ int readFileWithMalloc() {
 
     // Free and print the allocated memory to avoid memory leaks
     for (int i = 65; i < outer_size; i++) {
-//        if (array[i] == NULL) {
-//            printf("Null");
-//            continue;
-//        }
+        if (array[i] == NULL) {
+            printf("Null");
+            continue;
+        }
         for (int j = 65; j < middle_size; j++) {
-//            if (array[i][j] == NULL) {
-//                printf("Null");
-//                continue;
-//            }
+            if (array[i][j] == NULL) {
+                printf("Null");
+                continue;
+            }
             for (int k = 65; k < inner_size; k++) {
                 printf("Value at array[%d][%d][%d]: %.6f\n", i, j, k, array[i][j][k]); //todo: array[0][0[0]
             }
