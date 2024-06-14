@@ -5,27 +5,15 @@
 #include<sys/time.h>
 #include "main.h"
 
-typedef struct Next {
-    char character;
-    double probability;
-} Next;
 
-const int arraySize = 128;
-double ngramArray[128];
-int ngram = 2;
-Next data[256];
-double dataArray[256][256];
-char text[TXTLENGTH];
-int textLength = TXTLENGTH;
-double requiredPercentage = 0.1264;
-int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
-double* dataArrayPointer[256];
+
+
 
 
 int main() {
 //    createNgramme();
 //    readFile();
-//    randomNgram();
+    randomNgram();
 //    readFileRandom();
 //    readFileNew();
     readFileWithMalloc();
@@ -195,10 +183,6 @@ int readFileWithMalloc() {
     int isFirstSet = -1;
     int isSecondSet = -1;
 
-    int i = 0;
-    int j = 0;
-    int k = 0;
-
     while(fgets(line, 100, fptr)) {
         int firstLetter = line[0];
         int secondLetter = line[1];
@@ -212,50 +196,26 @@ int readFileWithMalloc() {
         double probability = 0.0;
         sscanf(doubleString, "%lf", &probability);
 
-        int isLetterSet = 0;
-
-        while (!isLetterSet) {
-            //1. Schleife
-            if (i != firstLetter) {
-                array[i] = NULL;
-                i++;
-                continue;
-            } else if (isFirstSet != firstLetter) {
+        for (int i = 0; i < outer_size; i++) {
+            if (i != firstLetter) continue;
+            if (isFirstSet != firstLetter) {
                 array[i] = (double**) malloc(middle_size * sizeof(double *));
                 isFirstSet = firstLetter;
             }
 
-            //2. Schleife
-            if (j != secondLetter) {
-                array[i][j] = NULL;
-                j++;
-                if (j > 255) {
-                    j = 0;
-                    isLetterSet = 1;
+            for (int j = 0; j < middle_size; j++) {
+                if (j != secondLetter) continue;
+                if (isSecondSet != secondLetter) {
+                    array[i][j] = (double*) malloc(inner_size * sizeof(double));
+                    isSecondSet = secondLetter;
                 }
-                continue;
-            } else if (isSecondSet != secondLetter) {
-                array[i][j] = (double*) malloc(inner_size * sizeof(double));
-                isSecondSet = secondLetter;
-            }
 
-            //3. Schleife
-            if (k == thirdLetter) {
-                array[i][j][k] = probability; // Assign a simple value based on index
-                isLetterSet = 1;
-            }
-            if (k < 255) {
-                k++;
-            } else {
-                k = 0;
-                isLetterSet = 1;
-            }
+                for (int k = 0; k < inner_size; k++) {
+                    if (k != thirdLetter) continue;
 
-            if (i < firstLetter) i++;
-            if (j < secondLetter) j++;
-            if (j > 255) {
-                j = 0;
-                isLetterSet = 1;
+                    array[i][j][k] = probability;  // Assign a simple value based on index
+                    break;
+                }
             }
         }
 

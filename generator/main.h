@@ -20,4 +20,20 @@ void getFirstLetterByUser(int letters[2]);
 int readFileWithMalloc();
 char* getNextLine(FILE*);
 
+typedef struct Next {
+    char character;
+    double probability;
+} Next;
+
+const int arraySize = 128;
+double ngramArray[128];
+int ngram = 2;
+Next data[256];
+double dataArray[256][256];
+char text[TXTLENGTH];
+int textLength = TXTLENGTH;
+double requiredPercentage = 0.1264;
+int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
+double* dataArrayPointer[256];
+
 #endif //PROGRAMMIER_PROJEKT_MAIN_H
