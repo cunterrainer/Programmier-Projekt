@@ -118,6 +118,7 @@ int readFileWithMalloc() {
     // Open a file in writing mode
     fptr = fopen("../ngrammeRandom.csv", "r");
     char line[13];
+    int isEOF = 0;
 
     // Define the size of the outer array
     int outer_size = 256;
@@ -125,61 +126,85 @@ int readFileWithMalloc() {
 
     int middle_size = 256;
     int inner_size = 256;
+    int trash = 256; // fgets ändert diesen wert auf 10, warum keine Ahnung. Wird er entfernt, wird die Variable darüber auf 10 gesetzt
 
-    int isFirstSet = -1;
-    int isSecondSet = -1;
+    int oldFirstLetter = -1;
+    int oldSecondLetter = -1;
 
-    while(fgets(line, 100, fptr)) {
-        int firstLetter = line[0];
-        int secondLetter = line[1];
-        int thirdLetter = line[2];
+    fgets(line, 100, fptr);
+    int firstLetter = line[0];
+    int secondLetter = line[1];
+    int thirdLetter = line[2];
 
-        char doubleString[8];
-        for (int i = 4; i < 12; i++) {
-            doubleString[i-4] = line[i];
+    char doubleString[8];
+    for (int i = 4; i < 12; i++) {
+        doubleString[i-4] = line[i];
+    }
+
+    double probability = 0.0;
+    probability = atof(doubleString);
+
+    for (int i = 0; i < outer_size; i++) {
+        if (isEOF == 1) break;
+
+        if (i != firstLetter) {
+            array[i] = NULL;
+            continue;
         }
 
-        double probability = 0.0;
-        sscanf(doubleString, "%lf", &probability);
+        if (oldFirstLetter != firstLetter) {
+            array[i] = (double**) malloc(middle_size * sizeof(double *));
+            oldFirstLetter = firstLetter;
+        }
 
-        for (int i = 0; i < outer_size; i++) {
-            if (i != firstLetter) continue;
-            if (isFirstSet != firstLetter) {
-                array[i] = (double**) malloc(middle_size * sizeof(double *));
-                isFirstSet = firstLetter;
+        for (int j = 0; j < middle_size; j++) {
+            if (isEOF == 1) break;
+
+            if (j != secondLetter) {
+                array[i][j] = NULL;
+                continue;
             }
 
-            for (int j = 0; j < middle_size; j++) {
-                if (j != secondLetter) continue;
-                if (isSecondSet != secondLetter) {
-                    array[i][j] = (double*) malloc(inner_size * sizeof(double));
-                    isSecondSet = secondLetter;
-                }
+            if (oldSecondLetter != secondLetter) {
+                array[i][j] = (double*) malloc(inner_size * sizeof(double));
+                oldSecondLetter = secondLetter;
+            }
 
-                for (int k = 0; k < inner_size; k++) {
-                    if (k != thirdLetter) continue;
+            for (int k = 0; k < inner_size; k++) {
+                if (k != thirdLetter) continue;
 
-                    array[i][j][k] = probability;  // Assign a simple value based on index
+                array[i][j][k] = probability;  // Assign a simple value based on index
+                if (!fgets(line, 100, fptr)) {
+                    isEOF = 1;
                     break;
                 }
+
+                firstLetter = line[0];
+                secondLetter = line[1];
+                thirdLetter = line[2];
+
+                for (int m = 4; m < 12; m++) {
+                    doubleString[m-4] = line[m];
+                }
+
+                probability = atof(doubleString);
             }
         }
-
     }
 
 
     // Free and print the allocated memory to avoid memory leaks
-    for (int i = 65; i < outer_size; i++) {
+    for (int i = 0; i < outer_size; i++) {
         if (array[i] == NULL) {
             printf("array[%d]: Null \n", i);
             continue;
         }
-        for (int j = 65; j < middle_size; j++) {
+        for (int j = 0; j < middle_size; j++) {
             if (array[i][j] == NULL) {
                 printf("array[%d][%d]: Null \n", i, j);
                 continue;
             }
-            for (int k = 65; k < inner_size; k++) {
+            for (int k = 0; k < inner_size; k++) {
                 printf("Value at array[%d][%d][%d]: %.6f\n", i, j, k, array[i][j][k]); //todo: array[0][0[0]
             }
             free(array[i][j]);
@@ -192,6 +217,10 @@ int readFileWithMalloc() {
     fclose(fptr);
 
     return 0;
+}
+
+void getNextLine(FILE* fptr) {
+    fgets(lineTest, 100, fptr);
 }
 
 void getFirstLetterByUser(int letters[2]){

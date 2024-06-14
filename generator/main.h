@@ -18,7 +18,7 @@ void initializeRandomNumSeed();
 void getFirstLetterByUser(int letters[2]);
 //void readFileNew();
 int readFileWithMalloc();
-char* getNextLine(FILE*);
+void getNextLine(FILE*);
 
 typedef struct Next {
     char character;
@@ -35,5 +35,6 @@ int textLength = TXTLENGTH;
 double requiredPercentage = 0.1264;
 int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
 double* dataArrayPointer[256];
+char lineTest[13];
 
 #endif //PROGRAMMIER_PROJEKT_MAIN_H
