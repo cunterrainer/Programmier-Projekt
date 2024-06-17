@@ -19,6 +19,10 @@ void getFirstLetterByUser(int letters[2]);
 //void readFileNew();
 int readFileWithMalloc();
 void getNextLine(FILE*);
+void getNextLetterByPercentageProbabilityWithMalloc(int letters[3]);
+void generateTextWithMalloc();
+void freeMalloc();
+int letters[3];
 
 typedef struct Next {
     char character;
@@ -36,5 +40,9 @@ double requiredPercentage = 0.1264;
 int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
 double* dataArrayPointer[256];
 char lineTest[13];
+int outer_size = 256;
+int middle_size = 256;
+int inner_size = 256;
+double*** arrayMalloc;
 
 #endif //PROGRAMMIER_PROJEKT_MAIN_H

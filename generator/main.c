@@ -8,10 +8,9 @@
 int main() {
 //    createNgramme();
 //    readFile();
-    randomNgram();
+//    randomNgram();
 //    readFileRandom();
 //    readFileNew();
-    readFileWithMalloc();
     initializeRandomNumSeed();
 
     // Settings
@@ -19,8 +18,8 @@ int main() {
     textLength = 99;
 
     // generate
-    generateText();
-    printf("%s", text);
+//    generateText();
+    generateTextWithMalloc();
 
     return 0;
 }
@@ -121,11 +120,8 @@ int readFileWithMalloc() {
     int isEOF = 0;
 
     // Define the size of the outer array
-    int outer_size = 256;
-    double*** array = (double***)malloc(outer_size * sizeof(double**));
+    arrayMalloc = (double***)malloc(outer_size * sizeof(double**));
 
-    int middle_size = 256;
-    int inner_size = 256;
     int trash = 256; // fgets ändert diesen wert auf 10, WARUM?!??!?! Wird er entfernt, wird die Variable darüber auf 10 gesetzt
 
     int oldFirstLetter = -1;
@@ -145,35 +141,41 @@ int readFileWithMalloc() {
     probability = atof(doubleString);
 
     for (int i = 0; i < outer_size; i++) {
-        if (isEOF == 1) break;
+        if (isEOF == 1) {
+            arrayMalloc[i] = NULL;
+            continue;
+        }
 
         if (i != firstLetter) {
-            array[i] = NULL;
+            arrayMalloc[i] = NULL;
             continue;
         }
 
         if (oldFirstLetter != firstLetter) {
-            array[i] = (double**) malloc(middle_size * sizeof(double *));
+            arrayMalloc[i] = (double**) malloc(middle_size * sizeof(double *));
             oldFirstLetter = firstLetter;
         }
 
         for (int j = 0; j < middle_size; j++) {
-            if (isEOF == 1) break;
+            if (isEOF == 1) {
+                arrayMalloc[i][j] = NULL;
+                continue;
+            }
 
             if (j != secondLetter) {
-                array[i][j] = NULL;
+                arrayMalloc[i][j] = NULL;
                 continue;
             }
 
             if (oldSecondLetter != secondLetter) {
-                array[i][j] = (double*) malloc(inner_size * sizeof(double));
+                arrayMalloc[i][j] = (double*) malloc(inner_size * sizeof(double));
                 oldSecondLetter = secondLetter;
             }
 
             for (int k = 0; k < inner_size; k++) {
                 if (k != thirdLetter) continue;
 
-                array[i][j][k] = probability;  // Assign a simple value based on index
+                arrayMalloc[i][j][k] = probability;  // Assign a simple value based on index
                 if (!fgets(line, 100, fptr)) {
                     isEOF = 1;
                     break;
@@ -192,42 +194,39 @@ int readFileWithMalloc() {
         }
     }
 
-
-    // Free and print the allocated memory to avoid memory leaks
-    for (int i = 0; i < outer_size; i++) {
-        if (array[i] == NULL) {
-            printf("array[%d]: Null \n", i);
-            continue;
-        }
-        for (int j = 0; j < middle_size; j++) {
-            if (array[i][j] == NULL) {
-                printf("array[%d][%d]: Null \n", i, j);
-                continue;
-            }
-            for (int k = 0; k < inner_size; k++) {
-                printf("Value at array[%d][%d][%d]: %.6f\n", i, j, k, array[i][j][k]); //todo: array[0][0[0]
-            }
-            free(array[i][j]);
-        }
-        free(array[i]);
-    }
-    free(array);
-
     // Close the file
     fclose(fptr);
 
     return 0;
 }
 
+void freeMalloc() {
+    // Free the allocated memory to avoid memory leaks
+    for (int i = 0; i < outer_size; i++) {
+        if (arrayMalloc[i] == NULL) {
+            continue;
+        }
+        for (int j = 0; j < middle_size; j++) {
+            if (arrayMalloc[i][j] == NULL) {
+                continue;
+            }
+            free(arrayMalloc[i][j]);
+        }
+        free(arrayMalloc[i]);
+    }
+    free(arrayMalloc);
+}
+
 void getNextLine(FILE* fptr) {
     fgets(lineTest, 100, fptr);
 }
 
-void getFirstLetterByUser(int letters[2]){
+void getFirstLetterByUser(int letters[3]){
     printf("Start Buchstabe eingeben: ");
-    char firstLetter = 'a';
-    scanf("%c",&firstLetter);
-    letters[0] = firstLetter;
+    char firstLetters[2];
+    scanf("%s",&firstLetters);
+    letters[0] = firstLetters[0];
+    letters[1] = firstLetters[1];
 }
 
 void readFileRandom() {
@@ -257,7 +256,7 @@ void readFileRandom() {
 }
 
 void generateText() {
-    int letters[2];
+    int letters[3];
 
 //    getFirstLetterByHighestProbability(letters);
 //    getFirstLettersByPercentageProbability(letters);
@@ -278,6 +277,29 @@ void generateText() {
         letters[0] = letters[1];
     }
 
+}
+
+void generateTextWithMalloc() {
+    readFileWithMalloc();
+
+    getFirstLetterByUser(letters);
+    text[0] = (char) letters[0];
+    text[1] = (char) letters[1];
+
+    for (int i = 2; i < textLength; i++) {
+        int blblbl = 0;
+        int adf = 0; //32759
+        int dff = 0; //-519602112
+        int blbdlbl = 0; //32759
+        int wer = 0; //-519692835
+        getNextLetterByPercentageProbabilityWithMalloc(letters);
+        text[i] = (char) letters[2];
+        letters[0] = letters[1];
+        letters[1] = letters[2];
+    }
+
+    printf("\n%s", text);
+    freeMalloc();
 }
 
 void getFirstLettersByPercentageProbability(int letters[2]) {
@@ -343,6 +365,27 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     randomNum = getRandomNum(counter);
 
     letters[1] = probabilities[randomNum];
+}
+
+void getNextLetterByPercentageProbabilityWithMalloc(int letters[3]) {
+    double probabilities[256] = {0};
+    int first = letters[0];
+    int second = letters[1];
+    int counter = 0;
+
+    for (int third = 0; third < inner_size; third++) {
+        if (arrayMalloc[first][second][third] > requiredPercentage) {
+            if (counter == 256) break;
+            probabilities[counter] = third;
+            counter++;
+        }
+    }
+
+    //random Buchstabe aus array zuweisen
+    unsigned int randomNum = 257;
+    randomNum = getRandomNum(counter);
+
+    letters[2] = probabilities[randomNum];
 }
 
 void initializeRandomNumSeed() {
