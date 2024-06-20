@@ -12,12 +12,14 @@ A_b:0.7_c:0.1 ...
 
 #define MAX_CHARS 256
 
-typedef struct {
-    char following_char;
+typedef struct
+{
+    char next_char;
     double probability;
 } NgramEntry;
 
-typedef struct {
+typedef struct
+{
     char current_char;
     NgramEntry* entries;
     int entry_count;
@@ -48,7 +50,7 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
         while (token)
         {
             ngrams[count].entries = realloc(ngrams[count].entries, (ngrams[count].entry_count + 1) * sizeof(NgramEntry));
-            ngrams[count].entries[ngrams[count].entry_count].following_char = token[0];
+            ngrams[count].entries[ngrams[count].entry_count].next_char = token[0];
             token = strtok(NULL, "_: \n");
             ngrams[count].entries[ngrams[count].entry_count].probability = atof(token);
             token = strtok(NULL, "_: \n");
@@ -75,14 +77,14 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
 }
 
 
-void printngram(Ngram* ngrams, int* ngram_count)
+void printngram(Ngram* ngrams, int ngram_count)
 {
-    for (int i = 0; i < *ngram_count; ++i)
+    for (int i = 0; i < ngram_count; ++i)
     {
         printf("%c ", ngrams[i].current_char);
         for (int k = 0; k < ngrams[i].entry_count; ++k)
         {
-            printf("%c %.5f ", ngrams[i].entries[k].following_char, ngrams[i].entries[k].probability);
+            printf("%c %.5f ", ngrams[i].entries[k].next_char, ngrams[i].entries[k].probability);
         }
         puts("");
     }
@@ -130,7 +132,7 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count)
             {
                 for (int k = 0; k < ngrams[j].entry_count; k++)
                 {
-                    if (ngrams[j].entries[k].following_char == next_char)
+                    if (ngrams[j].entries[k].next_char == next_char)
                     {
                         log_total_probability += log(ngrams[j].entries[k].probability);
                         found = 1;
@@ -158,7 +160,8 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count)
 }
 
 
-double calculate_perplexity(double cross_entropy) {
+double calculate_perplexity(double cross_entropy)
+{
     return exp(cross_entropy);
 }
 
@@ -176,21 +179,21 @@ double calculate_probability_from_perplexity(double perplexity, double baseline_
 int main()
 {
     Ngram ngrams[MAX_CHARS];
-    int b;
+    int ngrams_len = 0;
     char* input = NULL;
-    if (!parse_ngram_model("ngram1.txt", ngrams, &b) || !read_input_text("text2.txt", &input))
+    if (!parse_ngram_model("ngram1.txt", ngrams, &ngrams_len) || !read_input_text("text4.txt", &input))
     {
         return 0;
     }
-    printngram(ngrams, &b);
+    printngram(ngrams, ngrams_len);
     printf("%s\n", input);
 
 
-    double cross_entropy = calculate_cross_entropy(input, ngrams, b);
+    double cross_entropy = calculate_cross_entropy(input, ngrams, ngrams_len);
     double perplexity = calculate_perplexity(cross_entropy);
 
     // Use a predefined baseline perplexity (e.g., perplexity of random text)
-    double baseline_perplexity = 100.0; // This is an example value, adjust as needed
+    double baseline_perplexity = 50; // This is an example value, adjust as needed
 
     double probability = calculate_probability_from_perplexity(perplexity, baseline_perplexity);
 
@@ -209,9 +212,7 @@ int main()
     printf("Perplexity: %.6f\n", perplexity);
     printf("Probability that the text was written by the same person: %.2f%%\n", probability);
 
-    //printf("Probability that the text was written by the same person: %e\n", probability*100);
-
-    for (int i = 0; i < b; ++i)
+    for (int i = 0; i < ngrams_len; ++i)
     {
         free(ngrams[i].entries);
     }
