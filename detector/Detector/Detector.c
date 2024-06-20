@@ -94,7 +94,7 @@ void print_ngram(Ngram* ngrams, int ngram_count)
 }
 
 
-bool read_input_text(const char* filename, char** text)
+char* read_input_text(const char* filename)
 {
     FILE* file = fopen(filename, "r");
     if (!file)
@@ -112,18 +112,17 @@ bool read_input_text(const char* filename, char** text)
     }
     fseek(file, 0, SEEK_SET);
 
-    *text = malloc(length + 1);
-    if (*text == NULL)
+    char* text = malloc(length + 1);
+    if (text == NULL)
     {
         fprintf(stderr, "Failed to allocate memory for input text\n");
         return false;
     }
 
-    fread(*text, 1, length, file);
-    (*text)[length] = '\0';
-
+    fread(text, 1, length, file);
+    text[length] = '\0';
     fclose(file);
-    return true;
+    return text;
 }
 
 
@@ -198,8 +197,8 @@ double calculate_probability(double perplexity)
 
 void match(const char* text_source, Ngram* ngrams, int ngrams_len, int ngrams_size)
 {
-    char* input = NULL;
-    if (!read_input_text(text_source, &input))
+    char* input = read_input_text(text_source);
+    if (input == NULL)
     {
         return;
     }
