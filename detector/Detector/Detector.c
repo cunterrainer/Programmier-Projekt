@@ -110,11 +110,13 @@ bool read_input_text(const char* filename, char** text)
 
 
 
-double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count, int ngram_size) {
+double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count, int ngram_size)
+{
     double log_total_probability = 0.0;
     int len = strlen(text);
     int ngrams_used = 0;
-    for (int i = 0; i <= len - ngram_size; i++) {
+    for (int i = 0; i <= len - ngram_size; i++)
+    {
         char prefix[MAX_PREFIX_LEN + 1];
         strncpy(prefix, &text[i], ngram_size - 1);
         prefix[ngram_size - 1] = '\0';
@@ -122,10 +124,14 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
 
         // Find the ngram for prefix
         int found = 0;
-        for (int j = 0; j < ngram_count; j++) {
-            if (strcmp(ngrams[j].prefix, prefix) == 0) {
-                for (int k = 0; k < ngrams[j].entry_count; k++) {
-                    if (ngrams[j].entries[k].next_char == next_char) {
+        for (int j = 0; j < ngram_count; j++)
+        {
+            if (strcmp(ngrams[j].prefix, prefix) == 0)
+            {
+                for (int k = 0; k < ngrams[j].entry_count; k++)
+                {
+                    if (ngrams[j].entries[k].next_char == next_char)
+                    {
                         log_total_probability += log(ngrams[j].entries[k].probability);
                         found = 1;
                         ngrams_used++;
@@ -136,15 +142,15 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
             }
         }
 
-        if (!found) {
+        if (!found)
+        {
             log_total_probability += log(0.01);  // Assign a small probability if the n-gram is not found
             ngrams_used++;
         }
     }
 
-    if (ngrams_used == 0) {
+    if (ngrams_used == 0)
         return INFINITY; // No n-grams found
-    }
 
     return -log_total_probability / ngrams_used; // Return the average negative log probability
 }
@@ -183,9 +189,8 @@ int main()
     double cross_entropy = calculate_cross_entropy(input, ngrams, ngrams_len, ngram_size); // n-gram length + 1 e.g. A_b:0.1 n=2
     double perplexity = calculate_perplexity(cross_entropy);
 
-    // Use a predefined baseline perplexity (e.g., perplexity of random text)
-    double baseline_perplexity = 50; // This is an example value, adjust as needed
 
+    double baseline_perplexity = 50;
     double probability = calculate_probability_from_perplexity(perplexity, baseline_perplexity);
 
     // Ensure the calculated probability is within valid range
