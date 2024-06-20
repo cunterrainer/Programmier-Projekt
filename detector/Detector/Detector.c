@@ -1,16 +1,14 @@
-/*
-A_b:0.7_c:0.1 ...
-*/
-
 #define _CRT_SECURE_NO_WARNINGS
+#include <math.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <math.h>
 #include <stdbool.h>
 
 #define MAX_CHARS 256
+#define MAX_PREFIX_LEN 10
+#define MAX_LINE_LEN 1024
 
 typedef struct
 {
@@ -20,13 +18,13 @@ typedef struct
 
 typedef struct
 {
-    char current_char;
+    char prefix[MAX_PREFIX_LEN + 1];
     NgramEntry* entries;
     int entry_count;
 } Ngram;
 
 
-bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
+bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int * ngram_size)
 {
     FILE* file = fopen(filename, "r");
     if (!file)
@@ -35,18 +33,27 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
         return false;
     }
 
-    char line[1024];
+    char line[MAX_LINE_LEN];
     int count = 0;
+    *ngram_size = 0;
 
     while (fgets(line, sizeof(line), file))
     {
         if (line[0] == '\n') continue;  // Skip empty lines
-        
-        ngrams[count].current_char = line[0];
+
+
+        // Extract prefix
+        char* prefix_end = strchr(line, '_');
+        if (prefix_end == NULL) continue;  // Skip invalid lines
+        int prefix_len = prefix_end - line;
+        *ngram_size = prefix_len + 1;
+        strncpy(ngrams[count].prefix, line, prefix_len);
+        ngrams[count].prefix[prefix_len] = '\0';
+
         ngrams[count].entry_count = 0;
         ngrams[count].entries = NULL;
-        
-        char* token = strtok(line + 2, "_:\n");  // Skip the current_char and the underscore
+
+        char* token = strtok(prefix_end + 1, "_:\n");  // Skip the prefix and the underscore
         while (token)
         {
             ngrams[count].entries = realloc(ngrams[count].entries, (ngrams[count].entry_count + 1) * sizeof(NgramEntry));
@@ -56,17 +63,6 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
             token = strtok(NULL, "_: \n");
             ngrams[count].entry_count++;
         }
-
-        // Normalize probabilities
-        //double total_probability = 0.0;
-        //for (int i = 0; i < ngrams[count].entry_count; i++)
-        //{
-        //    total_probability += ngrams[count].entries[i].probability;
-        //}
-        //for (int i = 0; i < ngrams[count].entry_count; i++)
-        //{
-        //    ngrams[count].entries[i].probability = ngrams[count].entries[i].probability / total_probability;
-        //}
 
         count++;
     }
@@ -81,7 +77,7 @@ void printngram(Ngram* ngrams, int ngram_count)
 {
     for (int i = 0; i < ngram_count; ++i)
     {
-        printf("%c ", ngrams[i].current_char);
+        printf("%s ", ngrams[i].prefix);
         for (int k = 0; k < ngrams[i].entry_count; ++k)
         {
             printf("%c %.5f ", ngrams[i].entries[k].next_char, ngrams[i].entries[k].probability);
@@ -113,27 +109,23 @@ bool read_input_text(const char* filename, char** text)
 }
 
 
-double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count)
-{
+
+double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count, int ngram_size) {
     double log_total_probability = 0.0;
     int len = strlen(text);
     int ngrams_used = 0;
+    for (int i = 0; i <= len - ngram_size; i++) {
+        char prefix[MAX_PREFIX_LEN + 1];
+        strncpy(prefix, &text[i], ngram_size - 1);
+        prefix[ngram_size - 1] = '\0';
+        char next_char = text[i + ngram_size - 1];
 
-    for (int i = 0; i < len - 1; i++)
-    {
-        char current_char = text[i];
-        char next_char = text[i + 1];
-
-        // Find the ngram for current_char
+        // Find the ngram for prefix
         int found = 0;
-        for (int j = 0; j < ngram_count; j++)
-        {
-            if (ngrams[j].current_char == current_char)
-            {
-                for (int k = 0; k < ngrams[j].entry_count; k++)
-                {
-                    if (ngrams[j].entries[k].next_char == next_char)
-                    {
+        for (int j = 0; j < ngram_count; j++) {
+            if (strcmp(ngrams[j].prefix, prefix) == 0) {
+                for (int k = 0; k < ngrams[j].entry_count; k++) {
+                    if (ngrams[j].entries[k].next_char == next_char) {
                         log_total_probability += log(ngrams[j].entries[k].probability);
                         found = 1;
                         ngrams_used++;
@@ -144,15 +136,13 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count)
             }
         }
 
-        if (!found)
-        {
+        if (!found) {
             log_total_probability += log(0.01);  // Assign a small probability if the n-gram is not found
             ngrams_used++;
         }
     }
 
-    if (ngrams_used == 0)
-    {
+    if (ngrams_used == 0) {
         return INFINITY; // No n-grams found
     }
 
@@ -181,7 +171,8 @@ int main()
     Ngram ngrams[MAX_CHARS];
     int ngrams_len = 0;
     char* input = NULL;
-    if (!parse_ngram_model("ngram1.txt", ngrams, &ngrams_len) || !read_input_text("text4.txt", &input))
+    int ngram_size;
+    if (!parse_ngram_model("ngram2.txt", ngrams, &ngrams_len, &ngram_size) || !read_input_text("t.txt", &input))
     {
         return 0;
     }
@@ -189,7 +180,7 @@ int main()
     printf("%s\n", input);
 
 
-    double cross_entropy = calculate_cross_entropy(input, ngrams, ngrams_len);
+    double cross_entropy = calculate_cross_entropy(input, ngrams, ngrams_len, ngram_size); // n-gram length + 1 e.g. A_b:0.1 n=2
     double perplexity = calculate_perplexity(cross_entropy);
 
     // Use a predefined baseline perplexity (e.g., perplexity of random text)
