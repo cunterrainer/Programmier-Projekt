@@ -82,10 +82,10 @@ void printngram(Ngram* ngrams, int ngram_count)
 {
     for (int i = 0; i < ngram_count; ++i)
     {
-        printf("%s ", ngrams[i].prefix);
+        printf("%s_", ngrams[i].prefix);
         for (int k = 0; k < ngrams[i].entry_count; ++k)
         {
-            printf("%c %.5f ", ngrams[i].entries[k].next_char, ngrams[i].entries[k].probability);
+            printf("%c:%.5f_", ngrams[i].entries[k].next_char, ngrams[i].entries[k].probability);
         }
         puts("");
     }
@@ -194,7 +194,7 @@ int main()
     int ngrams_len = 0;
     char* input = NULL;
     int ngram_size;
-    if (!parse_ngram_model("ngram2.txt", ngrams, &ngrams_len, &ngram_size) || !read_input_text("t.txt", &input))
+    if (!parse_ngram_model("../ngrams/1_a_1.txt", ngrams, &ngrams_len, &ngram_size) || !read_input_text("../ngrams/1_a.txt", &input))
     {
         return 0;
     }
@@ -206,7 +206,7 @@ int main()
     double perplexity = calculate_perplexity(cross_entropy);
 
 
-    double baseline_perplexity = 50;
+    double baseline_perplexity = 100;
     double probability = calculate_probability_from_perplexity(perplexity, baseline_perplexity);
 
     // Ensure the calculated probability is within valid range

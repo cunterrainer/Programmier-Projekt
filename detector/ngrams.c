@@ -44,7 +44,7 @@ void countProbability(Next letter[]) {
 }
 
 int main() {
-    char str[] = "The golden sun dipped below the horizon, casting an amber glow over the tranquil sea, as gentle waves whispered secrets to the shore";
+    char str[] = "The golden sun dipped below the horizon, casting an amber glow over the tranquil sea. Gentle waves whispered secrets to the shore, their rhythmic dance a lullaby for the senses. Seagulls soared above, their cries blending with the soft murmur of the ocean, creating a symphony that echoed the day's end. The sky, painted in hues of pink and purple, slowly faded into a deep indigo, welcoming the first stars of the night";
     Next letter[N] = {0}; // Initialize all occurrences to zero
 
     countOccurence(str, letter);

@@ -107,9 +107,10 @@ void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_le
     puts("");
 }
 
+#define ttt 5
 int main() {
     trienode *root = NULL;
-    char *str = "hi this is a test for a strong string toast toad";
+    char *str = "The passage of time is marked by change, and with change comes the inevitability of aging and mortality. This awareness of our finite existence imbues time with a sense of urgency, prompting us to seek meaning and purpose in our lives. The philosopher Martin Heidegger described this as being - toward - death, the idea that our consciousness of mortality shapes our understanding of time and existence. In contrast, Eastern philosophies, such as Buddhism, emphasize the importance of living in the present moment, free from the constraints of past regrets and future anxieties. This mindfulness approach suggests that by embracing the present, we can transcend the linear perception of time and find a deeper sense of peace and fulfillment";
 
     // Insert n-grams of length 2 to 5
     for (int n = 2; n <= 5; n++) {
@@ -117,8 +118,8 @@ int main() {
     }
 
     // Print probabilities for n-grams of length 2 to 5
-    for (int n = 2; n <= 5; n++) {
-        printf("\nProbabilities for %d-grams:\n", n);
+    for (int n = ttt; n <= ttt; n++) {
+        //printf("\nProbabilities for %d-grams:\n", n);
         for (int i = 0; i < strlen(str) - n + 1; i++) {
             char prefix[n];
             strncpy(prefix, str + i, n - 1);
