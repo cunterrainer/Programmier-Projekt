@@ -41,7 +41,6 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, in
     {
         if (line[0] == '\n') continue;  // Skip empty lines
 
-
         // Extract prefix
         char* prefix_end = strchr(line, '_');
         if (prefix_end == NULL) continue;  // Skip invalid lines
@@ -57,6 +56,12 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, in
         while (token)
         {
             ngrams[count].entries = realloc(ngrams[count].entries, (ngrams[count].entry_count + 1) * sizeof(NgramEntry));
+            if (ngrams[count].entries == NULL)
+            {
+                fprintf(stderr, "Failed to allocate memory for ngram entries\n");
+                return false;
+            }
+            
             ngrams[count].entries[ngrams[count].entry_count].next_char = token[0];
             token = strtok(NULL, "_: \n");
             ngrams[count].entries[ngrams[count].entry_count].probability = atof(token);
@@ -98,9 +103,20 @@ bool read_input_text(const char* filename, char** text)
 
     fseek(file, 0, SEEK_END);
     long length = ftell(file);
+    if (length == -1)
+    {
+        perror(filename);
+        return false;
+    }
     fseek(file, 0, SEEK_SET);
 
     *text = malloc(length + 1);
+    if (*text == NULL)
+    {
+        fprintf(stderr, "Failed to allocate memory for input text\n");
+        return false;
+    }
+
     fread(*text, 1, length, file);
     (*text)[length] = '\0';
 
