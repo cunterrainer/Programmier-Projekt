@@ -8,6 +8,7 @@ A_b:0.7_c:0.1 ...
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define MAX_CHARS 256
 
@@ -23,13 +24,13 @@ typedef struct {
 } Ngram;
 
 
-void parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
+bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
 {
     FILE* file = fopen(filename, "r");
     if (!file)
     {
-        perror("Error opening file");
-        return;
+        perror(filename);
+        return false;
     }
 
     char line[1024];
@@ -55,21 +56,22 @@ void parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count)
         }
 
         // Normalize probabilities
-        double total_probability = 0.0;
-        for (int i = 0; i < ngrams[count].entry_count; i++)
-        {
-            total_probability += ngrams[count].entries[i].probability;
-        }
-        for (int i = 0; i < ngrams[count].entry_count; i++)
-        {
-            ngrams[count].entries[i].probability /= total_probability;
-        }
+        //double total_probability = 0.0;
+        //for (int i = 0; i < ngrams[count].entry_count; i++)
+        //{
+        //    total_probability += ngrams[count].entries[i].probability;
+        //}
+        //for (int i = 0; i < ngrams[count].entry_count; i++)
+        //{
+        //    ngrams[count].entries[i].probability = ngrams[count].entries[i].probability / total_probability;
+        //}
 
         count++;
     }
 
     *ngram_count = count;
     fclose(file);
+    return true;
 }
 
 
@@ -87,13 +89,13 @@ void printngram(Ngram* ngrams, int* ngram_count)
 }
 
 
-void read_input_text(const char* filename, char** text)
+bool read_input_text(const char* filename, char** text)
 {
     FILE* file = fopen(filename, "r");
     if (!file)
     {
-        perror("Error opening file");
-        return;
+        perror(filename);
+        return false;
     }
 
     fseek(file, 0, SEEK_END);
@@ -105,6 +107,7 @@ void read_input_text(const char* filename, char** text)
     (*text)[length] = '\0';
 
     fclose(file);
+    return true;
 }
 
 
@@ -172,17 +175,18 @@ double calculate_probability_from_perplexity(double perplexity, double baseline_
 
 int main()
 {
-    Ngram a[MAX_CHARS];
+    Ngram ngrams[MAX_CHARS];
     int b;
-    parse_ngram_model("ngram1.txt", a, &b);
-    printngram(a, &b);
-
     char* input = NULL;
-    read_input_text("text1.txt", &input);
+    if (!parse_ngram_model("ngram1.txt", ngrams, &b) || !read_input_text("text2.txt", &input))
+    {
+        return 0;
+    }
+    printngram(ngrams, &b);
     printf("%s\n", input);
 
 
-    double cross_entropy = calculate_cross_entropy(input, a, b);
+    double cross_entropy = calculate_cross_entropy(input, ngrams, b);
     double perplexity = calculate_perplexity(cross_entropy);
 
     // Use a predefined baseline perplexity (e.g., perplexity of random text)
@@ -209,7 +213,7 @@ int main()
 
     for (int i = 0; i < b; ++i)
     {
-        free(a[i].entries);
+        free(ngrams[i].entries);
     }
     free(input);
     getchar();
