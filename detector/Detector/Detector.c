@@ -168,6 +168,7 @@ int search_ngrams(Ngram* ngrams, int ngram_count, const char* prefix)
 }
 
 
+// Quelle: https://machinelearningmastery.com/cross-entropy-for-machine-learning/
 double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count, int ngram_size)
 {
     double probability = 0.0;
