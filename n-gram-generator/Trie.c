@@ -8,7 +8,7 @@
 
 typedef struct trienode {
     struct trienode *children[N];//Array of Trienode poiters (the pointer give the address of each character in the trie, if there is no character the pointer is null)
-    bool word_end;
+    //bool word_end;
     int occurrence;
 } trienode;
 
@@ -18,14 +18,14 @@ trienode *createnode() {
     for (int i = 0; i < N; i++) {
         new_node->children[i] = NULL; // set all the pointers to the childnodes to null
     }
-    new_node->word_end = false;
+    //new_node->word_end = false;
     new_node->occurrence = 0;
     return new_node; // return the address of the new node
 }
 
 //Function to insert n-grams (2 to 5) into the trie
 void insert_ngram(trienode **root, char *text, int n) {//pointer to a pointer to a Trie node because I want to manipulate the root
-    if (*root == NULL) {//if the root is empty
+    if (*root == NULL) {//if the Trie is empty
         *root = createnode();//*root=new-node :means the root now contains the address of the newnode
     }
 
@@ -53,7 +53,7 @@ void insert_ngram(trienode **root, char *text, int n) {//pointer to a pointer to
         }
 //incremnt the occurence when the ngram is over
         current->occurrence++;
-        current->word_end = true;
+        //current->word_end = true;
     }
 }
 
@@ -115,7 +115,7 @@ int main() {
     }
 
     // Print probabilities for n-grams of length 2 to 5
-    for (int n = 2; n <= 5; n++) {
+    for (int n = 2; n <= 3; n++) {
         printf("\nProbabilities for %d-grams:\n", n);
         for (int i = 0; i <= strlen(str) - n; i++) {//loop through the text and and stop at the last n-gram
             char prefix[n];//Array to store the prefixes
