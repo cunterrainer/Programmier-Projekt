@@ -1,33 +1,39 @@
 #ifndef PROGRAMMIER_PROJEKT_MAIN_H
 #define PROGRAMMIER_PROJEKT_MAIN_H
 
-#define TXTLENGTH 100
+#define TXTLENGTH 500
 
 void writeInFile();
 void readFile();
 void createNgramme();
 void randomNgram();
 void readFileRandom();
-void getFirstLetterByHighestProbability(int letters[2]);
-void getNextLetterByHighestProbability(int letters[2]);
+void getFirstLetterByHighestProbability(char characters[2]);
+void getNextLetterByHighestProbability(char characters[2]);
 void generateText();
-void getNextLetterByPercentageProbability(int letters[2]);
-void getFirstLettersByPercentageProbability(int letters[2]);
+void getNextLetterByPercentageProbability(char characters[2]);
+void getFirstcharactersByPercentageProbability(char characters[2]);
 unsigned int getRandomNum(int counter);
 void initializeRandomNumSeed();
-void getFirstLetterByUser(int letters[2]);
+void getFirstLetterByUser(char characters[2]);
 //void readFileNew();
 int readFileWithMalloc();
 void getNextLine(FILE*);
-void getNextLetterByPercentageProbabilityWithMalloc(int letters[3]);
+void getNextLetterByPercentageProbabilityWithMalloc(char characters[3]);
 void generateTextWithMalloc();
 void freeMalloc();
-int letters[3];
+char characters[3];
 
 typedef struct Next {
     char character;
     double probability;
 } Next;
+
+typedef struct Node {
+    struct Node *children[256];
+    bool word_end;
+    int occurrence;
+} Node;
 
 const int arraySize = 128;
 double ngramArray[128];
