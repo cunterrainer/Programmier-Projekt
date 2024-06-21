@@ -78,7 +78,7 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, in
     return true;
 }
 
-
+// TODO: remove
 void print_ngram(Ngram* ngrams, int ngram_count)
 {
     for (int i = 0; i < ngram_count; ++i)
@@ -141,21 +141,32 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
 
         // Find the ngram for prefix
         bool found = false;
-        for (int j = 0; j < ngram_count; j++)
+
+        int j = 0;
+        while (j < ngram_count)
         {
-            if (strcmp(ngrams[j].prefix, prefix) == 0)
+            if (strcmp(ngrams[j].prefix, prefix) == 0) // found
             {
-                for (int k = 0; k < ngrams[j].entry_count; k++)
-                {
-                    if (ngrams[j].entries[k].next_char == next_char)
-                    {
-                        probability += log2(ngrams[j].entries[k].probability); // using log because otherwise the values would be too small to get proper results
-                        found = true;
-                        ngrams_used++;
-                        break;
-                    }
-                }
+                found = true;
                 break;
+            }
+            j++;
+        }
+        
+        if (found)
+        {
+            int k = 0;
+            found = false;
+            while (k < ngrams[j].entry_count)
+            {
+                if (ngrams[j].entries[k].next_char == next_char)
+                {
+                    probability += log2(ngrams[j].entries[k].probability); // using log because otherwise the values would be too small to get proper results
+                    found = true;
+                    ngrams_used++;
+                    break;
+                }
+                k++;
             }
         }
 
