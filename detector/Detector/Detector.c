@@ -24,6 +24,20 @@ typedef struct
 } Ngram;
 
 
+int compare_ngrams(const void* a, const void* b)
+{
+    Ngram* ngramA = (Ngram*)a;
+    Ngram* ngramB = (Ngram*)b;
+    return strcmp(ngramA->prefix, ngramB->prefix); // >0 if first non-matching char in str1 is greater than in str2 <0 if lower
+}
+
+
+void sort_ngrams(Ngram* ngrams, int ngram_count)
+{
+    qsort(ngrams, ngram_count, sizeof(Ngram), compare_ngrams);
+}
+
+
 bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int * ngram_size)
 {
     FILE* file = fopen(filename, "r");
@@ -75,6 +89,8 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, in
 
     *ngram_count = count;
     fclose(file);
+
+    sort_ngrams(ngrams, *ngram_count);
     return true;
 }
 
@@ -125,6 +141,32 @@ char* read_input_text(const char* filename)
 }
 
 
+// Quelle: https://www.geeksforgeeks.org/binary-search/
+int search_ngrams(Ngram* ngrams, int ngram_count, const char* prefix)
+{
+    int low = 0;
+    int high = ngram_count - 1;
+
+    while (low <= high)
+    {
+        const int middle = (low + high) / 2;
+        int cmp = strcmp(ngrams[middle].prefix, prefix);
+        if (cmp == 0)
+        {
+            return middle;
+        }
+        else if (cmp < 0) // ngrams.prefix is less than prefix
+        {
+            low = middle + 1;
+        }
+        else
+        {
+            high = middle - 1;
+        }
+    }
+    return -1;
+}
+
 
 double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count, int ngram_size)
 {
@@ -140,24 +182,12 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
         char next_char = text[i + ngram_size - 1];
 
         // Find the ngram for prefix
+        const int j = search_ngrams(ngrams, ngram_count, prefix);
         bool found = false;
 
-        int j = 0;
-        while (j < ngram_count)
+        if (j != -1)
         {
-            if (strcmp(ngrams[j].prefix, prefix) == 0) // found
-            {
-                found = true;
-                break;
-            }
-            j++;
-        }
-        
-        if (found)
-        {
-            int k = 0;
-            found = false;
-            while (k < ngrams[j].entry_count)
+            for (int k = 0; k < ngrams[j].entry_count; k++)
             {
                 if (ngrams[j].entries[k].next_char == next_char)
                 {
@@ -166,9 +196,9 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
                     ngrams_used++;
                     break;
                 }
-                k++;
             }
         }
+        
 
         if (!found)
         {
@@ -217,6 +247,7 @@ int main(int argc, char** argv)
     {
         return 0;
     }
+    print_ngram(ngrams, ngrams_len);
 
 
     const char* lowest_perplexity_text = NULL;
