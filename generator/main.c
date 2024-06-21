@@ -3,77 +3,230 @@
 #include <stdlib.h>
 #include <time.h>
 #include<sys/time.h>
-
-#define TXTLENGTH 100
-
-typedef struct Next {
-    char character;
-    double probability;
-} Next;
-
-const int arraySize = 128;
-double ngramArray[128];
-int ngram = 2;
-Next data[256];
-double dataArray[256][256];
-char text[TXTLENGTH];
-int textLength = TXTLENGTH;
-double requiredPercentage = 0.1264;
-int textGenMode = 0; //0 = highest prob., 1 = Random value over percentage
-
-void writeInFile();
-void readFile();
-void createNgramme();
-void randomNgram();
-void readFileRandom();
-void getFirstLetterByHighestProbability(int letters[2]);
-void getNextLetterByHighestProbability(int letters[2]);
-void generateText();
-void getNextLetterByPercentageProbability(int letters[2]);
-void getFirstLettersByPercentageProbability(int letters[2]);
-unsigned int getRandomNum(int counter);
-void initializeRandomNumSeed();
-void getFirstLetterByUser(int letters[2]);
-
+#include "main.h"
 
 int main() {
 //    createNgramme();
 //    readFile();
 //    randomNgram();
-    readFileRandom();
+//    readFileRandom();
+//    readFileNew();
     initializeRandomNumSeed();
 
     // Settings
     textGenMode = 1;
     textLength = 99;
-    
+
     // generate
-    generateText();
-    printf("%s", text);
+//    generateText();
+    generateTextWithMalloc();
 
     return 0;
 }
 
 /*todo:
- * - für mehr als zwei Buchstaben Funktionen anpassen
- * - testen (done)
- * - buchstaben vorgeben
- * - zeilenumbrüche
- * - header datei
- * - baumstruktur
+ * - buchstaben vorgeben (ein Buchstabe done)
  * - Zeilenanfang markieren, z.b. durch festes Zeichen
  *      - generieren von Sätzen
+ *      - zeilenumbrüche
 *  - in array pointer speichern
  *      - array pointer -> pointer -> double wert / Null
+ *      - für mehr als zwei Buchstaben Funktionen anpassen
  * - ...
+ *
+ * Done:
+ * - header datei (done)
+ * - testen (done)
+ *
  * */
 
 
-void getFirstLetterByUser(int letters[2]){
+// neues Schema
+//double* arrayPointer1[256];
+//double* arrayPointer2[256];
+//double* arrayPointer3[256];
+//double value;
+//
+//value = 0.0233;
+//arrayPointer2[0] = &value;
+//arrayPointer1[0] = arrayPointer2;
+
+//void readFileNew() {
+//
+//    FILE *fptr;
+//    char line[13];
+//    char doubleString[8];
+////    double** pArray[256];
+//    double** array = (double**)malloc(256 * sizeof(double*));
+//    double* pArray2[256];
+//    double pArray3[256];
+//    int firstLetter = 0;
+//    int secondLetter = 0;
+//    int oldFirstLetter;
+//    int oldSecondLetter;
+//    int oldFirstLetterBool;
+//    int oldSecondLetterBool;
+//
+//    // Open a file in writing mode
+//    fptr = fopen("../ngrammeRandom.csv", "r");
+//
+//    while(fgets(line, 100, fptr)) {
+//        oldFirstLetter = firstLetter;
+//        firstLetter = line[0];
+//        oldFirstLetterBool = (oldFirstLetter == firstLetter) ? 1 : 0;
+//
+//        oldSecondLetter = secondLetter;
+//        secondLetter = line[1];
+//        oldSecondLetterBool = (oldSecondLetter == secondLetter) ? 1 : 0;
+//
+//        int thirdLetter = line[2];
+//
+//        for (int i = 4; i < 12; i++) {
+//            doubleString[i-4] = line[i];
+//        }
+//
+//        double probability = 0.0;
+//
+//        sscanf(doubleString, "%lf", &probability);
+//
+////        dataArray[firstLetter][secondLetter] = probability;
+//
+//
+//        if (oldFirstLetterBool == 0) {
+////            double* pArray2[256];
+//            array[firstLetter] = (double*)malloc(256 * sizeof(double));
+//        }
+//
+//        if (oldSecondLetterBool == 0) {
+//            double pArray3[256];
+//            array
+//            pArray3[thirdLetter] = probability;
+//            array[firstLetter][secondLetter] = pArray3;
+//            pArray[firstLetter] = pArray2;
+//        }
+//
+//    }
+//
+//    // Close the file
+//    fclose(fptr);
+//
+//}
+
+int readFileWithMalloc() {
+    FILE* fptr;
+    // Open a file in writing mode
+    fptr = fopen("../ngrammeRandom.csv", "r");
+    char line[13];
+    int isEOF = 0;
+
+    // Define the size of the outer array
+    arrayMalloc = (double***)malloc(outer_size * sizeof(double**));
+
+    int trash = 256; // fgets ändert diesen wert auf 10, WARUM?!??!?! Wird er entfernt, wird die Variable darüber auf 10 gesetzt
+
+    int oldFirstLetter = -1;
+    int oldSecondLetter = -1;
+
+    fgets(line, 100, fptr);
+    int firstLetter = line[0];
+    int secondLetter = line[1];
+    int thirdLetter = line[2];
+
+    char doubleString[8];
+    for (int i = 4; i < 12; i++) {
+        doubleString[i-4] = line[i];
+    }
+
+    double probability = 0.0;
+    probability = atof(doubleString);
+
+    for (int i = 0; i < outer_size; i++) {
+        if (isEOF == 1) {
+            arrayMalloc[i] = NULL;
+            continue;
+        }
+
+        if (i != firstLetter) {
+            arrayMalloc[i] = NULL;
+            continue;
+        }
+
+        if (oldFirstLetter != firstLetter) {
+            arrayMalloc[i] = (double**) malloc(middle_size * sizeof(double *));
+            oldFirstLetter = firstLetter;
+        }
+
+        for (int j = 0; j < middle_size; j++) {
+            if (isEOF == 1) {
+                arrayMalloc[i][j] = NULL;
+                continue;
+            }
+
+            if (j != secondLetter) {
+                arrayMalloc[i][j] = NULL;
+                continue;
+            }
+
+            if (oldSecondLetter != secondLetter) {
+                arrayMalloc[i][j] = (double*) malloc(inner_size * sizeof(double));
+                oldSecondLetter = secondLetter;
+            }
+
+            for (int k = 0; k < inner_size; k++) {
+                if (k != thirdLetter) continue;
+
+                arrayMalloc[i][j][k] = probability;  // Assign a simple value based on index
+                if (!fgets(line, 100, fptr)) {
+                    isEOF = 1;
+                    break;
+                }
+
+                firstLetter = line[0];
+                secondLetter = line[1];
+                thirdLetter = line[2];
+
+                for (int m = 4; m < 12; m++) {
+                    doubleString[m-4] = line[m];
+                }
+
+                probability = atof(doubleString);
+            }
+        }
+    }
+
+    // Close the file
+    fclose(fptr);
+
+    return 0;
+}
+
+void freeMalloc() {
+    // Free the allocated memory to avoid memory leaks
+    for (int i = 0; i < outer_size; i++) {
+        if (arrayMalloc[i] == NULL) {
+            continue;
+        }
+        for (int j = 0; j < middle_size; j++) {
+            if (arrayMalloc[i][j] == NULL) {
+                continue;
+            }
+            free(arrayMalloc[i][j]);
+        }
+        free(arrayMalloc[i]);
+    }
+    free(arrayMalloc);
+}
+
+void getNextLine(FILE* fptr) {
+    fgets(lineTest, 100, fptr);
+}
+
+void getFirstLetterByUser(int letters[3]){
     printf("Start Buchstabe eingeben: ");
-    char firstLetter = 'a';
-    scanf("%c",&firstLetter);
-    letters[0] = firstLetter;
+    char firstLetters[2];
+    scanf("%s",&firstLetters);
+    letters[0] = firstLetters[0];
+    letters[1] = firstLetters[1];
 }
 
 void readFileRandom() {
@@ -103,17 +256,17 @@ void readFileRandom() {
 }
 
 void generateText() {
-    int letters[2];
+    int letters[3];
 
 //    getFirstLetterByHighestProbability(letters);
 //    getFirstLettersByPercentageProbability(letters);
     getFirstLetterByUser(letters);
 
-    text[0] = (char) letters[0]; //todo: fix with user input
+    text[0] = (char) letters[0];
 //    text[1] = (char) letters[1];
 //    letters[0] = letters[1];
 
-    for (int i = 2; i < textLength; i++) {
+    for (int i = 1; i < textLength; i++) {
         if (textGenMode == 0) {
             getNextLetterByHighestProbability(letters);
         } else if (textGenMode == 1) {
@@ -124,6 +277,29 @@ void generateText() {
         letters[0] = letters[1];
     }
 
+}
+
+void generateTextWithMalloc() {
+    readFileWithMalloc();
+
+    getFirstLetterByUser(letters);
+    text[0] = (char) letters[0];
+    text[1] = (char) letters[1];
+
+    for (int i = 2; i < textLength; i++) {
+        int blblbl = 0;
+        int adf = 0; //32759
+        int dff = 0; //-519602112
+        int blbdlbl = 0; //32759
+        int wer = 0; //-519692835
+        getNextLetterByPercentageProbabilityWithMalloc(letters);
+        text[i] = (char) letters[2];
+        letters[0] = letters[1];
+        letters[1] = letters[2];
+    }
+
+    printf("\n%s", text);
+    freeMalloc();
 }
 
 void getFirstLettersByPercentageProbability(int letters[2]) {
@@ -189,6 +365,27 @@ void getNextLetterByPercentageProbability(int letters[2]) {
     randomNum = getRandomNum(counter);
 
     letters[1] = probabilities[randomNum];
+}
+
+void getNextLetterByPercentageProbabilityWithMalloc(int letters[3]) {
+    double probabilities[256] = {0};
+    int first = letters[0];
+    int second = letters[1];
+    int counter = 0;
+
+    for (int third = 0; third < inner_size; third++) {
+        if (arrayMalloc[first][second][third] > requiredPercentage) {
+            if (counter == 256) break;
+            probabilities[counter] = third;
+            counter++;
+        }
+    }
+
+    //random Buchstabe aus array zuweisen
+    unsigned int randomNum = 257;
+    randomNum = getRandomNum(counter);
+
+    letters[2] = probabilities[randomNum];
 }
 
 void initializeRandomNumSeed() {
@@ -303,9 +500,11 @@ void randomNgram() {
 
     for (int i = 65; i < 123; i++) {
         for (int j = 65; j < 123; j++) {
-            double randomNum = (double)rand() / (double)RAND_MAX * 60000;
-            double value = randomNum / 100000;
-            fprintf(fptr, "%c%c,%lf \n", i, j, value);
+            for (int k = 65; k < 123; k++) {
+                double randomNum = (double)rand() / (double)RAND_MAX * 60000;
+                double value = randomNum / 100000;
+                fprintf(fptr, "%c%c%c,%lf \n", i, j, k, value);
+            }
         }
     }
 
