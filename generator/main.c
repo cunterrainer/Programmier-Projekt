@@ -4,14 +4,23 @@
 #include <time.h>
 #include<sys/time.h>
 #include "main.h"
-
+#include <string.h>
 
 
 int main() {
-    randomNgram();
     initializeRandomNumSeed();
 
-    generateTextWithMalloc();
+//    randomNgram();
+//    int ngramCount = getNgramCount();
+    int ngramCount = 0;
+    int ngramSize = 0;
+    Ngram ngrams[MAX_CHARS];
+
+    if (!parse_ngram_model("../detector/ngrams/2_a_2.txt", ngrams, &ngramCount, &ngramSize)) {
+        return 0;
+    }
+
+    generateTextWithMalloc(ngrams, &ngramCount, &ngramSize);
 
     return 0;
 }
@@ -32,110 +41,76 @@ int main() {
  *
  * */
 
-// Function to create a new node
-Node *createnode() {
-    Node *new_node = (Node *)malloc(sizeof(*new_node));
-    for (int i = 0; i < 256; i++) {
-        new_node->children[i] = NULL;
-    }
-    new_node->word_end = false;
-    new_node->occurrence = 0;
-    return new_node;
+int compare_ngrams(const void* a, const void* b)
+{
+    Ngram* ngramA = (Ngram*)a;
+    Ngram* ngramB = (Ngram*)b;
+    return strcmp(ngramA->prefix, ngramB->prefix); // >0 if first non-matching char in str1 is greater than in str2 <0 if lower
 }
 
-void readFileNode() {
+void sort_ngrams(Ngram* ngrams, int ngram_count)
+{
+    qsort(ngrams, ngram_count, sizeof(Ngram), compare_ngrams);
+}
+
+int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int* ngram_size) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror(filename);
+        return false;
+    }
+
+    int count = 0;
+    char line[1024];
+
+    while (fgets(line, sizeof(line), file)) {
+        if (line[0] == '\n') continue;  // Skip empty lines
+
+        // Extract prefix
+        char* prefix_end = strchr(line, '_');
+        if (prefix_end == NULL) continue;  // Skip invalid lines
+
+        const int prefix_len = prefix_end - line;
+        *ngram_size = prefix_len + 1;
+
+        strncpy(ngrams[count].prefix, line, prefix_len);
+        ngrams[count].prefix[prefix_len] = '\0';
+
+        ngrams[count].entry_count = 0;
+        ngrams[count].entries = NULL;
+
+        const char* token = strtok(prefix_end + 1, "_:\n");  // Skip the prefix and the underscore
+        while (token != NULL) {
+            ngrams[count].entries = realloc(ngrams[count].entries, (ngrams[count].entry_count + 1) * sizeof(NgramEntry));
+            if (ngrams[count].entries == NULL) {
+                fprintf(stderr, "Failed to allocate memory for ngram entries\n");
+                return false;
+            }
+
+            ngrams[count].entries[ngrams[count].entry_count].next_char = token[0];
+            token = strtok(NULL, "_:\n");
+            ngrams[count].entries[ngrams[count].entry_count].probability = atof(token);
+            token = strtok(NULL, "_:\n");
+            ngrams[count].entry_count++;
+        }
+
+        count++;
+    }
+
+    *ngram_count = count;
+    fclose(file);
+
+    sort_ngrams(ngrams, *ngram_count);
+    return 1;
+}
+
+int getNgramCount() {
     //Abfrage welches Ngramm eingelesen werden soll
     printf("Welches Ngramm einlesen [2-5]:");
     int ngram;
     scanf("%d",&ngram);
-    Node ngramNode;
-
-    //
-    FILE* fptr;
-    // Open a file in writing mode
-    fptr = fopen("../ngrammeRandom.csv", "r");
-    char line[13];
-    int isEOF = 0;
-
-    // Define the size of the outer array
-    arrayMalloc = (double***)malloc(outer_size * sizeof(double**));
-
-    int trash = 256; //todo: fgets ändert diesen wert auf 10, WARUM?!??!?! Wird er entfernt, wird die Variable darüber auf 10 gesetzt
-
-    int oldFirstLetter = -1;
-    int oldSecondLetter = -1;
-
-    fgets(line, 100, fptr);
-    int firstLetter = line[0];
-    int secondLetter = line[1];
-    int thirdLetter = line[2];
-
-    char doubleString[8];
-    for (int i = 4; i < 12; i++) {
-        doubleString[i-4] = line[i];
-    }
-
-    double probability = 0.0;
-    probability = atof(doubleString);
-
-    for (int i = 0; i < outer_size; i++) {
-        if (isEOF == 1) {
-            arrayMalloc[i] = NULL;
-            continue;
-        }
-
-        if (i != firstLetter) {
-            arrayMalloc[i] = NULL;
-            continue;
-        }
-
-        if (oldFirstLetter != firstLetter) {
-            arrayMalloc[i] = (double**) malloc(middle_size * sizeof(double *));
-            oldFirstLetter = firstLetter;
-        }
-
-        for (int j = 0; j < middle_size; j++) {
-            if (isEOF == 1) {
-                arrayMalloc[i][j] = NULL;
-                continue;
-            }
-
-            if (j != secondLetter) {
-                arrayMalloc[i][j] = NULL;
-                continue;
-            }
-
-            if (oldSecondLetter != secondLetter) {
-                arrayMalloc[i][j] = (double*) malloc(inner_size * sizeof(double));
-                oldSecondLetter = secondLetter;
-            }
-
-            for (int k = 0; k < inner_size; k++) {
-                if (k != thirdLetter) continue;
-
-                arrayMalloc[i][j][k] = probability;  // Assign a simple value based on index
-                if (!fgets(line, 100, fptr)) {
-                    isEOF = 1;
-                    break;
-                }
-
-                firstLetter = line[0];
-                secondLetter = line[1];
-                thirdLetter = line[2];
-
-                for (int m = 4; m < 12; m++) {
-                    doubleString[m-4] = line[m];
-                }
-
-                probability = atof(doubleString);
-            }
-        }
-    }
-
-    // Close the file
-    fclose(fptr);
+    return ngram;
 }
-
 
 
 int readFileWithMalloc() {
@@ -244,7 +219,7 @@ void freeMalloc() {
 }
 
 
-void getFirstLetterByUser(char characters[3]){
+void getFirstLetterByUser(char* characters){
     printf("Ersten zwei Buchstabe eingeben:");
     char firstcharacters[2];
     scanf("%s",&firstcharacters);
@@ -253,10 +228,17 @@ void getFirstLetterByUser(char characters[3]){
 }
 
 
-void generateTextWithMalloc() {
-    readFileWithMalloc();
+void generateTextWithMalloc(Ngram* ngrams, int* ngramCount, int* ngramSize) {
+    char characters[3];
 
-    getFirstLetterByUser(characters);
+//    getFirstLetterByUser(characters);
+    printf("Ersten zwei Buchstabe eingeben:");
+    char firstcharacters[2];
+    scanf("%s",&firstcharacters);
+    characters[0] = firstcharacters[0];
+    characters[1] = firstcharacters[1];
+    //end
+
     text[0] = (char) characters[0];
     text[1] = (char) characters[1];
 
@@ -266,39 +248,49 @@ void generateTextWithMalloc() {
         int dff = 0; //-519602112
         int blbdlbl = 0; //32759
         int wer = 0; //-519692835
-        getNextLetterByPercentageProbabilityWithMalloc(characters);
+        if (!getNextLetterByPercentageProbabilityWithMalloc(characters, ngrams, *ngramCount, *ngramSize)) {
+            break;
+        }
         text[i] = characters[2];
         characters[0] = characters[1];
         characters[1] = characters[2];
 
-        if (text[i] == 'd') {
-            break;
-        }
+//        if (text[i] == 'd') {
+//            break;
+//        }
     }
 
     printf("\n%s", text);
     //freeMalloc();
 }
 
-void getNextLetterByPercentageProbabilityWithMalloc(char characters[3]) {
-    double probabilities[1024] = {0};
-    int first = characters[0];
-    int second = characters[1];
+int getNextLetterByPercentageProbabilityWithMalloc(char characters[3], Ngram* ngrams, int ngramCount, int ngramSize) {
+    char characterPool[1024] = {0};
+    char prefix[2];
+    prefix[0] = characters[0];
+    prefix[1] = characters[1];
     int counter = 0;
 
-    for (int third = 0; third < inner_size; third++) {
-        if (arrayMalloc[first][second][third] > requiredPercentage) {
-            if (counter == 1024) break;
-            probabilities[counter] = third;
+    for (int i = 0; i < ngramCount; i++) {
+        if ((int) strcmp(ngrams[i].prefix,prefix)) continue;
+
+        for (int j = 0; j < ngrams[i].entry_count; j++) {
+            if (ngrams[i].entries->probability < requiredPercentage) continue;
+            characterPool[counter] = ngrams[i].entries->next_char;
             counter++;
         }
+        break;
     }
+
+    if (counter == 0) return 0;
 
     //random Buchstabe aus array zuweisen
     unsigned int randomNum = 1025;
     randomNum = getRandomNum(counter);
 
-    characters[2] = probabilities[randomNum];
+    characters[2] = characterPool[randomNum];
+
+    return 1;
 }
 
 void initializeRandomNumSeed() {
