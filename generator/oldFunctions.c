@@ -25,7 +25,7 @@ int readFileWithMalloc() {
     // Define the size of the outer array
     arrayMalloc = (double***)malloc(outer_size * sizeof(double**));
 
-    int trash = 256; //todo: fgets ändert diesen wert auf 10, WARUM?!??!?! Wird er entfernt, wird die Variable darüber auf 10 gesetzt
+    int trash = 256;
 
     int oldFirstLetter = -1;
     int oldSecondLetter = -1;
