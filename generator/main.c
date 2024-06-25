@@ -25,7 +25,7 @@ int main() {
         return 0;
     }
 
-    generateTextWithMalloc(ngrams, ngramCount, ngramSize);
+    generateText(ngrams, ngramCount, ngramSize);
 
     return 0;
 }
@@ -46,17 +46,17 @@ int main() {
  *
  * */
 
-int compare_ngrams(const void* a, const void* b)
-{
-    Ngram* ngramA = (Ngram*)a;
-    Ngram* ngramB = (Ngram*)b;
-    return strcmp(ngramA->prefix, ngramB->prefix); // >0 if first non-matching char in str1 is greater than in str2 <0 if lower
-}
-
-void sort_ngrams(Ngram* ngrams, int ngram_count)
-{
-    qsort(ngrams, ngram_count, sizeof(Ngram), compare_ngrams);
-}
+//int compare_ngrams(const void* a, const void* b)
+//{
+//    Ngram* ngramA = (Ngram*)a;
+//    Ngram* ngramB = (Ngram*)b;
+//    return strcmp(ngramA->prefix, ngramB->prefix); // >0 if first non-matching char in str1 is greater than in str2 <0 if lower
+//}
+//
+//void sort_ngrams(Ngram* ngrams, int ngram_count)
+//{
+//    qsort(ngrams, ngram_count, sizeof(Ngram), compare_ngrams);
+//}
 
 int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int* ngram_size) {
     FILE* file = fopen(filename, "r");
@@ -105,7 +105,7 @@ int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int
     *ngram_count = count;
     fclose(file);
 
-    sort_ngrams(ngrams, *ngram_count);
+//    sort_ngrams(ngrams, *ngram_count);
     return 1;
 }
 
@@ -127,7 +127,7 @@ void getFirstLetterByUser(char* characters){
 }
 
 
-void generateTextWithMalloc(Ngram* ngrams, int ngramCount, int ngramSize) {
+void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
     char characters[MAXNGRAMSIZE];
     ngramSize -= 1;
 //    getFirstLetterByUser(characters);
@@ -140,27 +140,27 @@ void generateTextWithMalloc(Ngram* ngrams, int ngramCount, int ngramSize) {
 
     for (int i = ngramSize; i < TXTLENGTH; i++) {
         if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
+            printf("\nNo Character found for last given prefix\n");
             break;
         }
         text[i] = characters[ngramSize];
 
+        //fill characters with prefix and clear remains
         for (int index = 0; index < MAXNGRAMSIZE; index++) {
             characters[index] = (index < ngramSize) ? characters[index+1] : '\000';
         }
 
-//        if (text[i] == 'd') {
-//            break;
-//        }
+        //Stop at sentence end
+        if (text[i] == '.') {
+            break;
+        }
     }
 
-    printf("\n%s", text);
+    printf("Generated Text:\n%s", text);
 }
 
 int getNextLetterByPercentageProbability(char characters[10], Ngram* ngrams, int ngramCount, int ngramSize) {
     char characterPool[1024] = {0};
-    char prefix[2];
-    prefix[0] = characters[0];
-    prefix[1] = characters[1];
     int counter = 0;
 
     for (int i = 0; i < ngramCount; i++) {

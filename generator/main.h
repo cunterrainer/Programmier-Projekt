@@ -21,7 +21,7 @@ typedef struct {
 unsigned int getRandomNum(int counter);
 void initializeRandomNumSeed();
 int getNextLetterByPercentageProbability(char characters[3], Ngram* ngrams, int ngramCount, int ngramSize);
-void generateTextWithMalloc(Ngram* ngrams, int ngramCount, int ngramSize);
+void generateText(Ngram* ngrams, int ngramCount, int ngramSize);
 int getNgramCount();
 int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int* ngram_size);
 char text[TXTLENGTH];
