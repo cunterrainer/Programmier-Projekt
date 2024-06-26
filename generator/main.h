@@ -3,7 +3,7 @@
 
 #define TXTLENGTH 100
 #define MAX_PREFIX_LEN 10
-#define MAX_CHARS 256
+#define MAX_CHARS 20000
 #define MAXNGRAMSIZE 10
 
 typedef struct {
@@ -24,6 +24,7 @@ int getNextLetterByPercentageProbability(char characters[3], Ngram* ngrams, int 
 void generateText(Ngram* ngrams, int ngramCount, int ngramSize);
 int getNgramCount();
 int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int* ngram_size);
+void getRandomPrefix(char characters[10], Ngram* ngrams, int ngramCount, int ngramSize);
 char text[TXTLENGTH];
 double requiredPercentage = 0.0;
 

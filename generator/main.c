@@ -30,22 +30,6 @@ int main() {
     return 0;
 }
 
-/*todo:
- * - buchstaben vorgeben (ein Buchstabe done)
- * - Zeilenanfang markieren, z.b. durch festes Zeichen
- *      - generieren von Sätzen
- *      - zeilenumbrüche
-*  - in array pointer speichern
- *      - array pointer -> pointer -> double wert / Null (done)
- *      - für mehr als zwei Buchstaben Funktionen anpassen
- * - ...
- *
- * Done:
- * - header datei (done)
- * - testen (done)
- *
- * */
-
 //int compare_ngrams(const void* a, const void* b)
 //{
 //    Ngram* ngramA = (Ngram*)a;
@@ -110,33 +94,32 @@ int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int
 }
 
 int getNgramCount() {
-    //Abfrage welches Ngramm eingelesen werden soll
     printf("Welches Ngramm einlesen [2-5]:");
     int ngram;
     scanf("%d",&ngram);
     return ngram;
 }
 
-
-void getFirstLetterByUser(char* characters){
-    printf("Ersten zwei Buchstabe eingeben:");
-    char firstcharacters[2];
-    scanf("%s",&firstcharacters);
-    characters[0] = firstcharacters[0];
-    characters[1] = firstcharacters[1];
-}
-
-
 void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
     char characters[MAXNGRAMSIZE];
     ngramSize -= 1;
-//    getFirstLetterByUser(characters);
+
     printf("Ersten %d Buchstaben eingeben:", ngramSize);
     scanf("%s",&characters);
-    //end
+
+    //check if prefix is valid
+    if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
+        //no valid prefix - get random start prefix
+        printf("\nNo Character found for given prefix");
+        getRandomPrefix(characters, ngrams, ngramCount, ngramSize);
+    }
+
+    //add prefix to text
     for (int index = 0; index < ngramSize; index++) {
         text[index] = (char) characters[index];
     }
+
+    characters[ngramSize] = '\000';
 
     for (int i = ngramSize; i < TXTLENGTH; i++) {
         if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
@@ -150,7 +133,7 @@ void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
             characters[index] = (index < ngramSize) ? characters[index+1] : '\000';
         }
 
-        //Stop at sentence end
+        //Stop at .
         if (text[i] == '.') {
             break;
         }
@@ -176,13 +159,21 @@ int getNextLetterByPercentageProbability(char characters[10], Ngram* ngrams, int
 
     if (counter == 0) return 0;
 
-    //random Buchstabe aus array zuweisen
+    //get random char from charcaterPool
     unsigned int randomNum = 1025;
     randomNum = getRandomNum(counter);
 
     characters[ngramSize] = characterPool[randomNum];
 
     return 1;
+}
+
+void getRandomPrefix(char characters[10], Ngram* ngrams, int ngramCount, int ngramSize) {
+    unsigned int num = getRandomNum(ngramCount);
+
+    for (int i = 0; i < ngramSize; i++) {
+        characters[i] = ngrams[num].prefix[i];
+    }
 }
 
 void initializeRandomNumSeed() {
