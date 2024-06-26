@@ -6,7 +6,6 @@
 #include "main.h"
 #include <string.h>
 
-
 int main() {
     initializeRandomNumSeed();
 
@@ -15,6 +14,7 @@ int main() {
 
     int ngramCount = getNgramCount();
 
+    //get filename
     char filename[30] = "../generator/ngrams/ngram_";
     char buffer[2];
     sprintf(buffer, "%d", ngramCount);
@@ -29,18 +29,6 @@ int main() {
 
     return 0;
 }
-
-//int compare_ngrams(const void* a, const void* b)
-//{
-//    Ngram* ngramA = (Ngram*)a;
-//    Ngram* ngramB = (Ngram*)b;
-//    return strcmp(ngramA->prefix, ngramB->prefix); // >0 if first non-matching char in str1 is greater than in str2 <0 if lower
-//}
-//
-//void sort_ngrams(Ngram* ngrams, int ngram_count)
-//{
-//    qsort(ngrams, ngram_count, sizeof(Ngram), compare_ngrams);
-//}
 
 int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int* ngram_size) {
     FILE* file = fopen(filename, "r");
@@ -89,28 +77,29 @@ int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int
     *ngram_count = count;
     fclose(file);
 
-//    sort_ngrams(ngrams, *ngram_count);
     return 1;
 }
 
 int getNgramCount() {
-    printf("Welches Ngramm einlesen [2-5]:");
+    printf("Welches Ngramm einlesen [2-9]:");
     int ngram;
     scanf("%d",&ngram);
     return ngram;
 }
 
 void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
-    char characters[MAXNGRAMSIZE];
+    char characters[MAXNGRAMSIZE] = "";
     ngramSize -= 1;
 
     printf("Ersten %d Buchstaben eingeben:", ngramSize);
     scanf("%s",&characters);
 
+    puts("");
+
     //check if prefix is valid
     if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
         //no valid prefix - get random start prefix
-        printf("\nNo Character found for given prefix");
+        printf("No Character found for given prefix: %s\n", characters);
         getRandomPrefix(characters, ngrams, ngramCount, ngramSize);
     }
 
@@ -123,7 +112,7 @@ void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
 
     for (int i = ngramSize; i < TXTLENGTH; i++) {
         if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
-            printf("\nNo Character found for last given prefix\n");
+            printf("No Character found for last prefix: %s\n", characters);
             break;
         }
         text[i] = characters[ngramSize];
@@ -138,7 +127,7 @@ void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
             break;
         }
     }
-
+    puts("");
     printf("Generated Text:\n%s", text);
 }
 
