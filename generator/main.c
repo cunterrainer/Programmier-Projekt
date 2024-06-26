@@ -15,7 +15,7 @@ int main() {
 
     int ngramCount = getNgramCount();
 
-    char filename[30] = "../detector/ngrams/2_a_";
+    char filename[30] = "../generator/ngrams/ngram_";
     char buffer[2];
     sprintf(buffer, "%d", ngramCount);
     strcat(filename, buffer);
@@ -168,7 +168,7 @@ int getNextLetterByPercentageProbability(char characters[10], Ngram* ngrams, int
 
         for (int j = 0; j < ngrams[i].entry_count; j++) {
             if (ngrams[i].entries->probability < requiredPercentage) continue;
-            characterPool[counter] = ngrams[i].entries->next_char;
+            characterPool[counter] = ngrams[i].entries[j].next_char;
             counter++;
         }
         break;
