@@ -2,94 +2,118 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdbool.h>
 
 #define N 256
 
 
 typedef struct trienode {
-    struct trienode *children[N];//Array of Trienode poiters (the pointer give the address of each character in the trie, if there is no character the pointer is null)
-    //bool word_end;
+    struct trienode *children[N];
     int occurrence;
 } trienode;
 
-// Function to create a new trienode
+
+typedef struct printed_ngram {
+    char prefix[N];
+    char suffix[2];  // Suffix is one character
+    struct printed_ngram *next;
+} printed_ngram;
+
+
+// Function to create a new trie node
 trienode *createnode() {
-    trienode *new_node = (trienode *)malloc(sizeof(*new_node));
+    trienode *new_node = malloc(sizeof(trienode));
     for (int i = 0; i < N; i++) {
-        new_node->children[i] = NULL; // set all the pointers to the childnodes to null
+        new_node->children[i] = NULL;
     }
-    //new_node->word_end = false;
     new_node->occurrence = 0;
-    return new_node; // return the address of the new node
+    return new_node;
 }
 
-//Function to insert n-grams (2 to 5) into the trie
-void insert_ngram(trienode **root, char *text, int n) {//pointer to a pointer to a Trie node because I want to manipulate the root
-    if (*root == NULL) {//if the Trie is empty
-        *root = createnode();//*root=new-node :means the root now contains the address of the newnode
+void insert_ngram(trienode **root, const char *str, int n, const char *prefix) {
+    if (*root == NULL) {
+    *root = createnode();//*root=new-node :means the root noe contains the address of the newnode
     }
-
-    int length = strlen(text);
-
-    for (int i = 0; i <= length - n; i++) {//loop through the text and and stop at the last n-gram
-        bool valid_ngram = true;
-        for (int j = 0; j < n; j++) {//loop through the n-gram and check if it contains spaces
-            if (text[i + j] == ' ') {
-                valid_ngram = false;
-                break; // Skip n-grams containing spaces
+    // Insert the prefix into the trie and update occurrences
+        trienode *current = *root;
+            for (int j = 0; j < n - 1; j++) {
+                unsigned char index = (unsigned char)prefix[j];
+                if (current->children[index] == NULL) {
+                    current->children[index] = createnode();
+                }
+                current = current->children[index];
             }
-        }
-        if (!valid_ngram) {
-            continue;
-        }
-
-        trienode *current = *root;//current points to the root node
-        for (int j = 0; j < n; j++) {//loop through the n-gram and insert the characters into the trie
-            unsigned char index = (unsigned char)text[i + j];
-            if (current->children[index] == NULL) {
-                current->children[index] = createnode();
-            }
-            current = current->children[index];//updates the current pointer to point to the childnode of the new character
-        }
-//incremnt the occurence when the ngram is over
-        current->occurrence++;
-        //current->word_end = true;
-    }
+            current->occurrence ++;
 }
 
-//Calculate the total occurrences of n-grams following a specific prefix
+// Function to create a new printed n-gram node
+printed_ngram *create_printed_ngram_node() {
+    printed_ngram *new_printed_ngram_node = malloc(sizeof(printed_ngram));
+    new_printed_ngram_node->next = NULL;
+    for (int i = 0; i < N; i++) {
+        new_printed_ngram_node->prefix[i] = '\0';
+    }
+    new_printed_ngram_node->suffix[0] = '\0';
+    new_printed_ngram_node->suffix[1] = '\0';
+    return new_printed_ngram_node;
+}
+
+// Function to check if an n-gram has already been printed
+bool is_printed(printed_ngram *head, char *prefix, char *suffix) {
+    printed_ngram *current = head;
+    while (current != NULL) {
+        if (strncmp(current->prefix, prefix, N) == 0 && strncmp(current->suffix, suffix, 2) == 0) {
+            return true;
+        }
+        current = current->next;
+    }
+    return false;
+}
+
+// Function to mark an n-gram as printed
+void insert_printed_ngram(printed_ngram **head, char *prefix, char *suffix) {
+    printed_ngram *new_node = create_printed_ngram_node();
+    strncpy(new_node->prefix, prefix, N);
+    strncpy(new_node->suffix, suffix, 2);
+
+    new_node->next = *head;
+    *head = new_node;
+}
+
+
+// Calculate the total occurrences of n-grams following a given prefix
 int calculate_total_following(trienode *root, const char *prefix, int prefix_len) {
     if (root == NULL) {
         return 0;
     }
 
-    trienode *current = root; //current pointer points to the same address as the root pointer
-    for (int i = 0; i < prefix_len; i++) {//loop through the prefix
+    trienode *current = root;
+    for (int i = 0; i < prefix_len; i++) {
         unsigned char index = (unsigned char)prefix[i];
-        if (current->children[index] == NULL) {//if the prefix is not in the trie exit the function
+        if (current->children[index] == NULL) {
             return 0;
         }
-        current = current->children[index];//update the current pointer to point to the childnode of the prefix
+        current = current->children[index];
     }
 
     int total = 0;
-    for (int i = 0; i < N; i++) {//loop through the children of the prefix
-        if (current->children[i] != NULL) {//if there is a childnode after the prefix
-            total += current->children[i]->occurrence;//add the occurence of the childnode to the total occurences of the letters after the prefix
+    for (int i = 0; i < N; i++) {
+        if (current->children[i] != NULL) {
+            total += current->children[i]->occurrence;
         }
     }
     return total;
 }
 
-//Print the probabilities of n-grams following a given prefix
-void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_len) {
-    trienode *current = root;//now the address that is stored in the root pointer is copied to the current pointer
-    for (int i = 0; i < prefix_len; i++) {//loop through the prefix
+// Print the probabilities of n-grams following a given prefix
+void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_len, printed_ngram **printed_head) {
+    trienode *current = root;
+    for (int i = 0; i < prefix_len; i++) {
         unsigned char index = (unsigned char)prefix[i];
-        if (current->children[index] == NULL) {//if the prefix is not in the trie exit the function
+        if (current->children[index] == NULL) {
             return;
         }
-        current = current->children[index];//update the current pointer to point to the childnode of the prefix
+        current = current->children[index];
     }
 
     int total_following = calculate_total_following(root, prefix, prefix_len);
@@ -97,31 +121,48 @@ void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_le
         return;
     }
 
+    printf("%s_", prefix);
     for (int i = 0; i < N; i++) {
-        if (current->children[i] != NULL) {//if there is a childnode after the prefix
-            double probability = (double)current->children[i]->occurrence / total_following;
-            printf("Probability of '%c' after '%s' is %.4f\n", i, prefix, probability);
+        if (current->children[i] != NULL) {
+            char suffix[2] = {i, '\0'};
+            if (!is_printed(*printed_head, (char *)prefix, suffix)) {
+                double probability = (double)current->children[i]->occurrence / total_following;
+                printf("%c:%.4f_",i, probability);
+                insert_printed_ngram(printed_head, (char *)prefix, suffix);
+            }
         }
     }
 }
-
+#define TTT 6
 int main() {
-    trienode *root = NULL;//the trie is empty at the beginning
+    trienode *root = NULL;
     char *str = "Deutschland (Vollform des Staatennamens seit 1949: Bundesrepublik Deutschland) ist ein Bundesstaat in Mitteleuropa.[6] Es hat 16 Bundesländer und ist als freiheitlich-demokratischer und sozialer Rechtsstaat verfasst. Die 1949 gegründete Bundesrepublik Deutschland stellt die jüngste Ausprägung des 1871 erstmals begründeten deutschen Nationalstaats dar. Im Rahmen der Wiedervereinigung Deutschlands wurde Berlin 1990 Bundeshauptstadt und 1991 zum Parlaments- und Regierungssitz bestimmt.";
 
-    // Insert n-grams of length 2 to 5
-    for (int n = 2; n <= 5; n++) {
-        insert_ngram(&root, str, n);//&root is the address of the root pointer (NULL)
-    }
+    printed_ngram *printed_head = NULL;
 
-    // Print probabilities for n-grams of length 2 to 5
-    for (int n = 2; n <= 3; n++) {
-        printf("\nProbabilities for %d-grams:\n", n);
-        for (int i = 0; i <= strlen(str) - n; i++) {//loop through the text and and stop at the last n-gram
-            char prefix[n];//Array to store the prefixes
-            strncpy(prefix, str + i, n - 1);//starting from the ith character copy n-1 characters into the prefix array
+    // Insert n-grams of length 2 to TTT
+    for (int n = 2; n <= TTT; n++) {
+        for (int i = 0; i <= strlen(str) - n; i++) {
+
+            char prefix[n];
+            strncpy(prefix, str + i, n - 1);
             prefix[n - 1] = '\0';
-            print_ngram_probabilities(root, prefix, n - 1);
+
+            char suffix[2] = {str[i + n - 1], '\0'};
+
+        insert_ngram(&root,str,n,prefix);
+
+    }
+}
+    // Print probabilities for n-grams of length 2 to TTT
+    for (int n = 2; n <= TTT; n++) {
+        printf("\nProbabilities for %d-grams:\n", n);
+        for (int i = 0; i <= strlen(str) - n; i++) {
+            char prefix[n];
+            strncpy(prefix, str + i, n - 1);
+            prefix[n - 1] = '\0';
+
+            print_ngram_probabilities(root, prefix, n - 1, &printed_head);
         }
     }
 
