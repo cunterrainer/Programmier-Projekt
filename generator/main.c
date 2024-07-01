@@ -4,388 +4,165 @@
 #include <time.h>
 #include<sys/time.h>
 #include "main.h"
+#include <string.h>
 
 int main() {
-//    createNgramme();
-//    readFile();
-//    randomNgram();
-//    readFileRandom();
-//    readFileNew();
     initializeRandomNumSeed();
 
-    // Settings
-    textGenMode = 1;
-    textLength = 99;
+    int ngramSize = 0;
+    Ngram ngrams[MAX_CHARS];
 
-    // generate
-//    generateText();
-    generateTextWithMalloc();
+    int ngramCount = getNgramCount();
+
+    //get filename
+    char filename[30] = "../generator/ngrams/ngram_";
+    char buffer[2];
+    sprintf(buffer, "%d", ngramCount);
+    strcat(filename, buffer);
+    strcat(filename, ".txt");
+
+    if (!parse_ngram_model(filename, ngrams, &ngramCount, &ngramSize)) {
+        return 0;
+    }
+
+    generateText(ngrams, ngramCount, ngramSize);
 
     return 0;
 }
 
-/*todo:
- * - buchstaben vorgeben (ein Buchstabe done)
- * - Zeilenanfang markieren, z.b. durch festes Zeichen
- *      - generieren von Sätzen
- *      - zeilenumbrüche
-*  - in array pointer speichern
- *      - array pointer -> pointer -> double wert / Null
- *      - für mehr als zwei Buchstaben Funktionen anpassen
- * - ...
- *
- * Done:
- * - header datei (done)
- * - testen (done)
- *
- * */
-
-
-// neues Schema
-//double* arrayPointer1[256];
-//double* arrayPointer2[256];
-//double* arrayPointer3[256];
-//double value;
-//
-//value = 0.0233;
-//arrayPointer2[0] = &value;
-//arrayPointer1[0] = arrayPointer2;
-
-//void readFileNew() {
-//
-//    FILE *fptr;
-//    char line[13];
-//    char doubleString[8];
-////    double** pArray[256];
-//    double** array = (double**)malloc(256 * sizeof(double*));
-//    double* pArray2[256];
-//    double pArray3[256];
-//    int firstLetter = 0;
-//    int secondLetter = 0;
-//    int oldFirstLetter;
-//    int oldSecondLetter;
-//    int oldFirstLetterBool;
-//    int oldSecondLetterBool;
-//
-//    // Open a file in writing mode
-//    fptr = fopen("../ngrammeRandom.csv", "r");
-//
-//    while(fgets(line, 100, fptr)) {
-//        oldFirstLetter = firstLetter;
-//        firstLetter = line[0];
-//        oldFirstLetterBool = (oldFirstLetter == firstLetter) ? 1 : 0;
-//
-//        oldSecondLetter = secondLetter;
-//        secondLetter = line[1];
-//        oldSecondLetterBool = (oldSecondLetter == secondLetter) ? 1 : 0;
-//
-//        int thirdLetter = line[2];
-//
-//        for (int i = 4; i < 12; i++) {
-//            doubleString[i-4] = line[i];
-//        }
-//
-//        double probability = 0.0;
-//
-//        sscanf(doubleString, "%lf", &probability);
-//
-////        dataArray[firstLetter][secondLetter] = probability;
-//
-//
-//        if (oldFirstLetterBool == 0) {
-////            double* pArray2[256];
-//            array[firstLetter] = (double*)malloc(256 * sizeof(double));
-//        }
-//
-//        if (oldSecondLetterBool == 0) {
-//            double pArray3[256];
-//            array
-//            pArray3[thirdLetter] = probability;
-//            array[firstLetter][secondLetter] = pArray3;
-//            pArray[firstLetter] = pArray2;
-//        }
-//
-//    }
-//
-//    // Close the file
-//    fclose(fptr);
-//
-//}
-
-int readFileWithMalloc() {
-    FILE* fptr;
-    // Open a file in writing mode
-    fptr = fopen("../ngrammeRandom.csv", "r");
-    char line[13];
-    int isEOF = 0;
-
-    // Define the size of the outer array
-    arrayMalloc = (double***)malloc(outer_size * sizeof(double**));
-
-    int trash = 256; // fgets ändert diesen wert auf 10, WARUM?!??!?! Wird er entfernt, wird die Variable darüber auf 10 gesetzt
-
-    int oldFirstLetter = -1;
-    int oldSecondLetter = -1;
-
-    fgets(line, 100, fptr);
-    int firstLetter = line[0];
-    int secondLetter = line[1];
-    int thirdLetter = line[2];
-
-    char doubleString[8];
-    for (int i = 4; i < 12; i++) {
-        doubleString[i-4] = line[i];
+int parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int* ngram_size) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror(filename);
+        return false;
     }
 
-    double probability = 0.0;
-    probability = atof(doubleString);
+    int count = 0;
+    char line[1024];
 
-    for (int i = 0; i < outer_size; i++) {
-        if (isEOF == 1) {
-            arrayMalloc[i] = NULL;
-            continue;
-        }
+    while (fgets(line, sizeof(line), file)) {
+        if (line[0] == '\n') continue;  // Skip empty lines
 
-        if (i != firstLetter) {
-            arrayMalloc[i] = NULL;
-            continue;
-        }
+        // Extract prefix
+        char* prefix_end = strchr(line, '_');
+        if (prefix_end == NULL) continue;  // Skip invalid lines
 
-        if (oldFirstLetter != firstLetter) {
-            arrayMalloc[i] = (double**) malloc(middle_size * sizeof(double *));
-            oldFirstLetter = firstLetter;
-        }
+        const int prefix_len = prefix_end - line;
+        *ngram_size = prefix_len + 1;
 
-        for (int j = 0; j < middle_size; j++) {
-            if (isEOF == 1) {
-                arrayMalloc[i][j] = NULL;
-                continue;
+        strncpy(ngrams[count].prefix, line, prefix_len);
+        ngrams[count].prefix[prefix_len] = '\0';
+
+        ngrams[count].entry_count = 0;
+        ngrams[count].entries = NULL;
+
+        const char* token = strtok(prefix_end + 1, "_:\n");  // Skip the prefix and the underscore
+        while (token != NULL) {
+            ngrams[count].entries = realloc(ngrams[count].entries, (ngrams[count].entry_count + 1) * sizeof(NgramEntry));
+            if (ngrams[count].entries == NULL) {
+                fprintf(stderr, "Failed to allocate memory for ngram entries\n");
+                return false;
             }
 
-            if (j != secondLetter) {
-                arrayMalloc[i][j] = NULL;
-                continue;
-            }
-
-            if (oldSecondLetter != secondLetter) {
-                arrayMalloc[i][j] = (double*) malloc(inner_size * sizeof(double));
-                oldSecondLetter = secondLetter;
-            }
-
-            for (int k = 0; k < inner_size; k++) {
-                if (k != thirdLetter) continue;
-
-                arrayMalloc[i][j][k] = probability;  // Assign a simple value based on index
-                if (!fgets(line, 100, fptr)) {
-                    isEOF = 1;
-                    break;
-                }
-
-                firstLetter = line[0];
-                secondLetter = line[1];
-                thirdLetter = line[2];
-
-                for (int m = 4; m < 12; m++) {
-                    doubleString[m-4] = line[m];
-                }
-
-                probability = atof(doubleString);
-            }
-        }
-    }
-
-    // Close the file
-    fclose(fptr);
-
-    return 0;
-}
-
-void freeMalloc() {
-    // Free the allocated memory to avoid memory leaks
-    for (int i = 0; i < outer_size; i++) {
-        if (arrayMalloc[i] == NULL) {
-            continue;
-        }
-        for (int j = 0; j < middle_size; j++) {
-            if (arrayMalloc[i][j] == NULL) {
-                continue;
-            }
-            free(arrayMalloc[i][j]);
-        }
-        free(arrayMalloc[i]);
-    }
-    free(arrayMalloc);
-}
-
-void getNextLine(FILE* fptr) {
-    fgets(lineTest, 100, fptr);
-}
-
-void getFirstLetterByUser(int letters[3]){
-    printf("Start Buchstabe eingeben: ");
-    char firstLetters[2];
-    scanf("%s",&firstLetters);
-    letters[0] = firstLetters[0];
-    letters[1] = firstLetters[1];
-}
-
-void readFileRandom() {
-    FILE *fptr;
-    char line[13];
-    char doubleString[8];
-
-    // Open a file in writing mode
-    fptr = fopen("../ngrammeRandom.csv", "r");
-
-    while(fgets(line, 100, fptr)) {
-        int firstLetter = line[0];
-        int secondLetter = line[1];
-
-        for (int i = 3; i < 12; i++) {
-            doubleString[i-3] = line[i];
+            ngrams[count].entries[ngrams[count].entry_count].next_char = token[0];
+            token = strtok(NULL, "_:\n");
+            ngrams[count].entries[ngrams[count].entry_count].probability = atof(token);
+            token = strtok(NULL, "_:\n");
+            ngrams[count].entry_count++;
         }
 
-        double probability = 0.0;
-        sscanf(doubleString, "%lf", &probability);
-
-        dataArray[firstLetter][secondLetter] = probability;
+        count++;
     }
 
-    // Close the file
-    fclose(fptr);
+    *ngram_count = count;
+    fclose(file);
+
+    return 1;
 }
 
-void generateText() {
-    int letters[3];
+int getNgramCount() {
+    printf("Welches Ngramm einlesen [2-9]:");
+    int ngram;
+    scanf("%d",&ngram);
+    return ngram;
+}
 
-//    getFirstLetterByHighestProbability(letters);
-//    getFirstLettersByPercentageProbability(letters);
-    getFirstLetterByUser(letters);
+void generateText(Ngram* ngrams, int ngramCount, int ngramSize) {
+    char characters[MAXNGRAMSIZE] = "";
+    ngramSize -= 1;
 
-    text[0] = (char) letters[0];
-//    text[1] = (char) letters[1];
-//    letters[0] = letters[1];
+    printf("Ersten %d Buchstaben eingeben:", ngramSize);
+    scanf("%s",&characters);
 
-    for (int i = 1; i < textLength; i++) {
-        if (textGenMode == 0) {
-            getNextLetterByHighestProbability(letters);
-        } else if (textGenMode == 1) {
-            getNextLetterByPercentageProbability(letters);
+    puts("");
+
+    //check if prefix is valid
+    if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
+        //no valid prefix - get random start prefix
+        printf("No Character found for given prefix: %s\n", characters);
+        getRandomPrefix(characters, ngrams, ngramCount, ngramSize);
+    }
+
+    //add prefix to text
+    for (int index = 0; index < ngramSize; index++) {
+        text[index] = (char) characters[index];
+    }
+
+    characters[ngramSize] = '\000';
+
+    for (int i = ngramSize; i < TXTLENGTH; i++) {
+        if (!getNextLetterByPercentageProbability(characters, ngrams, ngramCount, ngramSize)) {
+            printf("No Character found for last prefix: %s\n", characters);
+            break;
+        }
+        text[i] = characters[ngramSize];
+
+        //fill characters with prefix and clear remains
+        for (int index = 0; index < MAXNGRAMSIZE; index++) {
+            characters[index] = (index < ngramSize) ? characters[index+1] : '\000';
         }
 
-        text[i] = (char) letters[1];
-        letters[0] = letters[1];
-    }
-
-}
-
-void generateTextWithMalloc() {
-    readFileWithMalloc();
-
-    getFirstLetterByUser(letters);
-    text[0] = (char) letters[0];
-    text[1] = (char) letters[1];
-
-    for (int i = 2; i < textLength; i++) {
-        int blblbl = 0;
-        int adf = 0; //32759
-        int dff = 0; //-519602112
-        int blbdlbl = 0; //32759
-        int wer = 0; //-519692835
-        getNextLetterByPercentageProbabilityWithMalloc(letters);
-        text[i] = (char) letters[2];
-        letters[0] = letters[1];
-        letters[1] = letters[2];
-    }
-
-    printf("\n%s", text);
-    freeMalloc();
-}
-
-void getFirstLettersByPercentageProbability(int letters[2]) {
-    double probabilities[65000][2] = {0};
-    unsigned int counter = 0;
-    for (int i = 65; i < 122; i++) {
-        for (int j = 65; j < 122; j++) {
-            if (dataArray[i][j] > requiredPercentage) {
-                probabilities[counter][0] = i;
-                probabilities[counter++][1] = j;
-            }
+        //Stop at .
+        if (text[i] == '.') {
+            break;
         }
     }
-
-    //random Buchstabe aus array zuweisen
-    unsigned int randomNum = 257;
-    randomNum = getRandomNum(counter);
-
-    letters[0] = probabilities[randomNum][0];
-    letters[1] = probabilities[randomNum][1];
+    puts("");
+    printf("Generated Text:\n%s", text);
 }
 
-void getFirstLetterByHighestProbability(int letters[2]) {
-    //get highest probability
-    double max = 0.0;
-    for (int i = 65; i < 91; i++) { // 65 - A, 91 - Z, 122 - z
-        for (int j = 65; j < 91; j++) {
-            if (dataArray[i][j] > max) {
-                max = dataArray[i][j];
-                letters[0] = i;
-                letters[1] = j;
-            }
-        }
-    }
-
-}
-
-void getNextLetterByHighestProbability(int letters[2]) {
-    //get highest probability
-    double max = 0.0;
-    int i = letters[0];
-    for (int j = 65; j < 122; j++) {
-        if (dataArray[i][j] > max) {
-            max = dataArray[i][j];
-            letters[1] = j;
-        }
-    }
-
-}
-
-void getNextLetterByPercentageProbability(int letters[2]) {
-    double probabilities[256] = {0};
-    int i = letters[0];
-    int counter = 0;
-    for (int j = 65; j < 122; j++) {
-        if (dataArray[i][j] > requiredPercentage) {
-            probabilities[counter++] = j;
-        }
-    }
-
-    //random Buchstabe aus array zuweisen
-    unsigned int randomNum = 257;
-    randomNum = getRandomNum(counter);
-
-    letters[1] = probabilities[randomNum];
-}
-
-void getNextLetterByPercentageProbabilityWithMalloc(int letters[3]) {
-    double probabilities[256] = {0};
-    int first = letters[0];
-    int second = letters[1];
+int getNextLetterByPercentageProbability(char characters[10], Ngram* ngrams, int ngramCount, int ngramSize) {
+    char characterPool[1024] = {0};
     int counter = 0;
 
-    for (int third = 0; third < inner_size; third++) {
-        if (arrayMalloc[first][second][third] > requiredPercentage) {
-            if (counter == 256) break;
-            probabilities[counter] = third;
+    for (int i = 0; i < ngramCount; i++) {
+        if ((int) strcmp(ngrams[i].prefix,characters)) continue;
+
+        for (int j = 0; j < ngrams[i].entry_count; j++) {
+            if (ngrams[i].entries->probability < requiredPercentage) continue;
+            characterPool[counter] = ngrams[i].entries[j].next_char;
             counter++;
         }
+        break;
     }
 
-    //random Buchstabe aus array zuweisen
-    unsigned int randomNum = 257;
+    if (counter == 0) return 0;
+
+    //get random char from charcaterPool
+    unsigned int randomNum = 1025;
     randomNum = getRandomNum(counter);
 
-    letters[2] = probabilities[randomNum];
+    characters[ngramSize] = characterPool[randomNum];
+
+    return 1;
+}
+
+void getRandomPrefix(char characters[10], Ngram* ngrams, int ngramCount, int ngramSize) {
+    unsigned int num = getRandomNum(ngramCount);
+
+    for (int i = 0; i < ngramSize; i++) {
+        characters[i] = ngrams[num].prefix[i];
+    }
 }
 
 void initializeRandomNumSeed() {
@@ -398,116 +175,4 @@ void initializeRandomNumSeed() {
 
 unsigned int getRandomNum(int limit) {
     return (unsigned int) rand() % limit;
-}
-
-//old
-void readFile() {
-    FILE *file = fopen("../ngrammeRandom.csv", "r");
-    char doubleString[15] = "";
-    char character;
-    int c;
-    int counterData = 0;
-
-    if (file == NULL) printf("File not found"); //could not open file
-
-    bool isProbability = false;
-    bool isCharacter = true;
-    int i = 0;
-
-    while ((c = fgetc(file)) != EOF) {
-
-        if (isProbability) {
-
-            if (c == '\n') {
-                isProbability = false;
-                double probability = 0.0;
-                sscanf(doubleString, "%lf", &probability);
-
-                data[counterData].character = character;
-                data[counterData++].probability = probability;
-            } else {
-                doubleString[i++] = (char) c;
-            }
-
-        }
-
-        if ((char) c == ',') {
-            isProbability = true;
-            isCharacter = false;
-            i = 0;
-        }
-
-        if ((char) c == '\n') {
-            isCharacter = true;
-        }
-
-        if (isCharacter) {
-            character = (char) c;
-        }
-
-    }
-
-    printf("Finished reading");
-}
-
-
-// ------------------------------------------------- Erzeugen von Testdaten -------------------------------------------------
-
-void createNgramme() {
-    FILE *datei;
-    int c;
-
-    // Datei öffnen
-    datei = fopen("../file.txt", "r");
-
-    if (datei == NULL) {
-        printf("Error: File not found");
-    } else {
-        // Zeichenweise lesen und ausgeben
-        while ((c = fgetc(datei)) != EOF) {
-            putchar(c);
-            ngramArray[c] += 1.0;
-        }
-
-        // Datei schließen
-        fclose(datei);
-        writeInFile();
-    }
-
-}
-
-void writeInFile() {
-    FILE *fptr;
-
-    // Open a file in writing mode
-    fptr = fopen("../ngramme.csv", "w");
-
-    // Write some text to the file
-    for (int i = 0; i < arraySize; i++) {
-        fprintf(fptr, "%c,%lf \n", i, ngramArray[i]);
-    }
-
-    // Close the file
-    fclose(fptr);
-}
-
-//create random Ngram
-void randomNgram() {
-    FILE *fptr;
-
-    // Open a file in writing mode
-    fptr = fopen("../ngrammeRandom.csv", "w");
-
-    for (int i = 65; i < 123; i++) {
-        for (int j = 65; j < 123; j++) {
-            for (int k = 65; k < 123; k++) {
-                double randomNum = (double)rand() / (double)RAND_MAX * 60000;
-                double value = randomNum / 100000;
-                fprintf(fptr, "%c%c%c,%lf \n", i, j, k, value);
-            }
-        }
-    }
-
-    // Close the file
-    fclose(fptr);
 }

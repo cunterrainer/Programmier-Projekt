@@ -8,7 +8,6 @@
 
 #define MAX_CHARS 256
 #define MAX_PREFIX_LEN 10
-#define BASELINE_PERPLEXITY 100.0
 
 typedef struct
 {
@@ -23,6 +22,20 @@ typedef struct
     NgramEntry* entries;
     int entry_count;
 } Ngram;
+
+
+int compare_ngrams(const void* a, const void* b)
+{
+    Ngram* ngramA = (Ngram*)a;
+    Ngram* ngramB = (Ngram*)b;
+    return strcmp(ngramA->prefix, ngramB->prefix); // >0 if first non-matching char in str1 is greater than in str2 <0 if lower
+}
+
+
+void sort_ngrams(Ngram* ngrams, int ngram_count)
+{
+    qsort(ngrams, ngram_count, sizeof(Ngram), compare_ngrams);
+}
 
 
 bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, int * ngram_size)
@@ -76,10 +89,12 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, in
 
     *ngram_count = count;
     fclose(file);
+
+    sort_ngrams(ngrams, *ngram_count);
     return true;
 }
 
-
+// TODO: remove
 void print_ngram(Ngram* ngrams, int ngram_count)
 {
     for (int i = 0; i < ngram_count; ++i)
@@ -126,7 +141,34 @@ char* read_input_text(const char* filename)
 }
 
 
+// Quelle: https://www.geeksforgeeks.org/binary-search/
+int search_ngrams(Ngram* ngrams, int ngram_count, const char* prefix)
+{
+    int low = 0;
+    int high = ngram_count - 1;
 
+    while (low <= high)
+    {
+        const int middle = (low + high) / 2;
+        int cmp = strcmp(ngrams[middle].prefix, prefix);
+        if (cmp == 0)
+        {
+            return middle;
+        }
+        else if (cmp < 0) // ngrams.prefix is less than prefix
+        {
+            low = middle + 1;
+        }
+        else
+        {
+            high = middle - 1;
+        }
+    }
+    return -1;
+}
+
+
+// Quelle: https://machinelearningmastery.com/cross-entropy-for-machine-learning/
 double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count, int ngram_size)
 {
     double probability = 0.0;
@@ -141,28 +183,27 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
         char next_char = text[i + ngram_size - 1];
 
         // Find the ngram for prefix
+        const int j = search_ngrams(ngrams, ngram_count, prefix);
         bool found = false;
-        for (int j = 0; j < ngram_count; j++)
+
+        if (j != -1)
         {
-            if (strcmp(ngrams[j].prefix, prefix) == 0)
+            for (int k = 0; k < ngrams[j].entry_count; k++)
             {
-                for (int k = 0; k < ngrams[j].entry_count; k++)
+                if (ngrams[j].entries[k].next_char == next_char)
                 {
-                    if (ngrams[j].entries[k].next_char == next_char)
-                    {
-                        probability += log(ngrams[j].entries[k].probability); // using log because otherwise the values would be too small to get proper results
-                        found = true;
-                        ngrams_used++;
-                        break;
-                    }
+                    probability += log2(ngrams[j].entries[k].probability); // using log because otherwise the values would be too small to get proper results
+                    found = true;
+                    ngrams_used++;
+                    break;
                 }
-                break;
             }
         }
+        
 
         if (!found)
         {
-            probability += log(0.01);  // Assign a small probability if the n-gram is not found
+            probability += log2(0.001);  // Assign a small probability if the n-gram is not found
             ngrams_used++;
         }
     }
@@ -174,43 +215,21 @@ double calculate_cross_entropy(const char* text, Ngram* ngrams, int ngram_count,
 }
 
 
-double calculate_probability(double perplexity)
-{
-    if (perplexity > BASELINE_PERPLEXITY)
-    {
-        return 0.0; // Very low probability if perplexity is higher than baseline
-    }
-
-    const double probability = 100.0 * (1.0 - (perplexity / BASELINE_PERPLEXITY)); // Normalize to percentage
-
-    if (probability > 100.0)
-    {
-        return 100.0;
-    }
-    else if (probability < 0.0)
-    {
-        return 0.0;
-    }
-    return probability;
-}
-
-
-void match(const char* text_source, Ngram* ngrams, int ngrams_len, int ngrams_size)
+double calculate_perplexity(const char* text_source, Ngram* ngrams, int ngrams_len, int ngrams_size)
 {
     char* input = read_input_text(text_source);
     if (input == NULL)
     {
-        return;
+        return INFINITY;
     }
 
     const double cross_entropy = calculate_cross_entropy(input, ngrams, ngrams_len, ngrams_size); // n-gram length + 1 e.g. A_b:0.1 n=2
-    const double perplexity = exp(cross_entropy);
-    const double probability = calculate_probability(perplexity);
+    const double perplexity = pow(2, cross_entropy);
     free(input);
 
-    //printf("Cross-Entropy: %.6f\n", cross_entropy);
-    //printf("Perplexity: %.6f\n", perplexity);
-    printf("Probability that the text was written by the same person: %.2f%%\n", probability);
+    printf("Cross-Entropy: %.6f\n", cross_entropy);
+    printf("Perplexity: %.6f\n\n", perplexity);
+    return perplexity;
 }
 
 
@@ -229,14 +248,22 @@ int main(int argc, char** argv)
     {
         return 0;
     }
+    print_ngram(ngrams, ngrams_len);
 
 
+    const char* lowest_perplexity_text = NULL;
+    double lowest_perplexity = INFINITY;
     for (int i = 2; i < argc; ++i)
     {
-        printf("Text: %s\n", argv[i]);
-        match(argv[i], ngrams, ngrams_len, ngram_size);
+        printf("%s\n", argv[i]);
+        const double perplexity = calculate_perplexity(argv[i], ngrams, ngrams_len, ngram_size);
+        if (perplexity < lowest_perplexity)
+        {
+            lowest_perplexity = perplexity;
+            lowest_perplexity_text = argv[i];
+        }
     }
-
+    printf("Most likely match: %s\n", lowest_perplexity_text);
 
     for (int i = 0; i < ngrams_len; ++i)
     {

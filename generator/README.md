@@ -1,8 +1,3 @@
-Texte erzeugen mithilfe von N-Grammen
+# Programmier_Projekt_text-generator
 
-Nach Wahrscheinlichkeit
-- am wahrscheinlichstens
-- welches eines gewissen prozent wert (z.B. 0.7 übersteigt) wird zufällig ausgewählt
-
-Probleme:
-- gleicher Zufallswert (da time(NULL) immer gleichen Wert hat)
+In diesem Projekt, sollen Texte mithilfe von N-Grammen erzeugt werden
