@@ -94,20 +94,6 @@ bool parse_ngram_model(const char* filename, Ngram* ngrams, int* ngram_count, in
     return true;
 }
 
-// TODO: remove
-void print_ngram(Ngram* ngrams, int ngram_count)
-{
-    for (int i = 0; i < ngram_count; ++i)
-    {
-        printf("%s_", ngrams[i].prefix);
-        for (int k = 0; k < ngrams[i].entry_count; ++k)
-        {
-            printf("%c:%.5f_", ngrams[i].entries[k].next_char, ngrams[i].entries[k].probability);
-        }
-        puts("");
-    }
-}
-
 
 char* read_input_text(const char* filename)
 {
@@ -248,8 +234,6 @@ int main(int argc, char** argv)
     {
         return 0;
     }
-    print_ngram(ngrams, ngrams_len);
-
 
     const char* lowest_perplexity_text = NULL;
     double lowest_perplexity = INFINITY;
