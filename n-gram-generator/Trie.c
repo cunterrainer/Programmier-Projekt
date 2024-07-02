@@ -30,7 +30,7 @@ trienode *createnode() {
     return new_node;
 }
 
-void insert_ngram(trienode **root, const char *str, int n, const char *prefix) {
+void insert_ngram(trienode **root, int n, const char *prefix) {
     if (*root == NULL) {
     *root = createnode();//*root=new-node :means the root noe contains the address of the newnode
     }
@@ -132,11 +132,12 @@ void print_ngram_probabilities(trienode *root, const char *prefix, int prefix_le
             }
         }
     }
+    puts(" ");
 }
 #define TTT 6
 int main() {
     trienode *root = NULL;
-    char *str = "Deutschland (Vollform des Staatennamens seit 1949: Bundesrepublik Deutschland) ist ein Bundesstaat in Mitteleuropa.[6] Es hat 16 Bundesländer und ist als freiheitlich-demokratischer und sozialer Rechtsstaat verfasst. Die 1949 gegründete Bundesrepublik Deutschland stellt die jüngste Ausprägung des 1871 erstmals begründeten deutschen Nationalstaats dar. Im Rahmen der Wiedervereinigung Deutschlands wurde Berlin 1990 Bundeshauptstadt und 1991 zum Parlaments- und Regierungssitz bestimmt.";
+    char *str = "ababcdaab";
 
     printed_ngram *printed_head = NULL;
 
@@ -150,7 +151,7 @@ int main() {
 
             char suffix[2] = {str[i + n - 1], '\0'};
 
-        insert_ngram(&root,str,n,prefix);
+        insert_ngram(&root,n,prefix);
 
     }
 }
